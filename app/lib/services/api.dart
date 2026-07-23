@@ -24,6 +24,7 @@ class SessionGrant {
     required this.token,
     required this.tokenKind,
     required this.remainingSeconds,
+    required this.focusPoints,
   });
 
   final String callId;
@@ -31,6 +32,9 @@ class SessionGrant {
   final String token;
   final String tokenKind; // 'ephemeral' | 'dev_raw_key'
   final int remainingSeconds;
+
+  /// From the user's latest report — woven into the coach's prompt.
+  final List<String> focusPoints;
 }
 
 class Limits {
@@ -99,6 +103,9 @@ abstract final class Api {
       token: data['token'] as String,
       tokenKind: data['token_kind'] as String,
       remainingSeconds: data['remaining_seconds'] as int,
+      focusPoints: ((data['focus_points'] as List?) ?? [])
+          .map((e) => e.toString())
+          .toList(),
     );
   }
 

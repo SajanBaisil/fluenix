@@ -35,6 +35,26 @@ class SessionResponse(BaseModel):
     token_kind: Literal["ephemeral", "dev_raw_key"]
     expire_time: str | None
     remaining_seconds: int
+    # From the user's most recent report — the app weaves these into the
+    # coach's system prompt so each call practices what the last one exposed.
+    focus_points: list[str] = []
+
+
+async def _latest_focus_points(user_id: str) -> list[str]:
+    try:
+        rows = await supa.select(
+            "reports",
+            columns="focus_points,calls!inner(user_id)",
+            filters={
+                "calls.user_id": f"eq.{user_id}",
+                "order": "created_at.desc",
+                "limit": "1",
+            },
+        )
+        return list(rows[0].get("focus_points") or [])[:3] if rows else []
+    except Exception:
+        logger.exception("focus point lookup failed for %s", user_id)
+        return []
 
 
 async def _tier(user_id: str) -> str:
@@ -96,6 +116,7 @@ async def create_session(body: SessionRequest, user_id: UserId) -> SessionRespon
         token_kind=kind,  # type: ignore[arg-type]
         expire_time=expire,
         remaining_seconds=remaining,
+        focus_points=await _latest_focus_points(user_id),
     )
 
 

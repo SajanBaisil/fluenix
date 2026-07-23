@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import '../config.dart';
 import 'audio_io.dart';
 import 'voice_session.dart';
 
@@ -25,6 +24,8 @@ class GeminiLiveSession implements VoiceSession {
     required this.model,
     required this.token,
     required this.isEphemeral,
+    required this.systemPrompt,
+    required this.voiceName,
     MicStream? mic,
   }) : _mic = mic ?? MicStream();
 
@@ -38,6 +39,8 @@ class GeminiLiveSession implements VoiceSession {
   final String model;
   final String token;
   final bool isEphemeral;
+  final String systemPrompt;
+  final String voiceName;
   final MicStream _mic;
   final _events = StreamController<VoiceEvent>.broadcast();
 
@@ -92,13 +95,13 @@ class GeminiLiveSession implements VoiceSession {
             'responseModalities': ['AUDIO'],
             'speechConfig': {
               'voiceConfig': {
-                'prebuiltVoiceConfig': {'voiceName': Config.voiceName},
+                'prebuiltVoiceConfig': {'voiceName': voiceName},
               },
             },
           },
           'systemInstruction': {
             'parts': [
-              {'text': Config.systemPrompt},
+              {'text': systemPrompt},
             ],
           },
           // Transcripts of both sides — persisted later for the post-call

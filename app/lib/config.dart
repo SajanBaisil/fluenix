@@ -25,9 +25,6 @@ abstract final class Config {
   /// Check https://ai.google.dev/gemini-api/docs/live-api for current names.
   static const liveModel = 'models/gemini-3.1-flash-live-preview';
 
-  /// Voice for the coach persona.
-  static const voiceName = 'Aoede';
-
   /// Duplex is decided per audio route: earpiece/wired/Bluetooth get full
   /// barge-in (no acoustic echo path), loudspeaker gates the mic while the
   /// coach speaks (half-duplex) unless this flag says otherwise.
@@ -35,25 +32,4 @@ abstract final class Config {
   /// Set true to trust the hardware echo canceller on loudspeaker too —
   /// works on many phones now that playback uses the voice-call path.
   static const speakerFullDuplex = false;
-
-  /// Emma — the friendly coach from the persona pack (PLAN.md §3).
-  static const systemPrompt = '''
-You are Emma, a warm and friendly English conversation coach on a phone call
-with a learner from India. This is a casual get-to-know-you call.
-
-How you behave on the call:
-- Speak naturally, like a friend on the phone: short turns, contractions,
-  occasional "oh really?", "no way!", light laughter.
-- Ask one question at a time and genuinely follow up on their answers.
-- Match their level: keep your vocabulary simple if they struggle, richer if
-  they are fluent.
-- Never lecture about grammar mid-conversation. If they make a mistake, just
-  continue naturally — sometimes you may gently recast their sentence in your
-  reply ("Oh, you've been working there for two years? Nice!").
-- Keep the conversation going: if they give short answers, ask easier, more
-  concrete questions.
-- Keep your turns under 3 sentences. This is their speaking practice, not yours.
-
-Open the call by greeting them by name if known, otherwise warmly, and ask an
-easy first question about their day.''';
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../config.dart';
 import '../../services/api.dart';
 import '../../theme/app_theme.dart';
+import '../coach/coaches.dart';
 import '../report/report_screen.dart';
 import '../../voice/audio_io.dart';
 import '../../voice/audio_route.dart';
@@ -14,7 +15,9 @@ import '../../voice/voice_session.dart';
 enum CallState { connecting, listening, speaking, ended, error }
 
 class CallScreen extends StatefulWidget {
-  const CallScreen({super.key});
+  const CallScreen({super.key, required this.coach, required this.scenario});
+  final Coach coach;
+  final Scenario scenario;
 
   @override
   State<CallScreen> createState() => _CallScreenState();
@@ -64,12 +67,17 @@ class _CallScreenState extends State<CallScreen> {
     String model;
     String token;
     bool isEphemeral;
+    var focusPoints = const <String>[];
     try {
-      final grant = await Api.startSession();
+      final grant = await Api.startSession(
+        scenario: widget.scenario.id,
+        persona: widget.coach.id,
+      );
       _grant = grant;
       model = grant.model;
       token = grant.token;
       isEphemeral = grant.tokenKind == 'ephemeral';
+      focusPoints = grant.focusPoints;
     } on OutOfMinutesException {
       setState(() {
         _state = CallState.error;
@@ -95,6 +103,9 @@ class _CallScreenState extends State<CallScreen> {
       model: model,
       token: token,
       isEphemeral: isEphemeral,
+      systemPrompt:
+          buildSystemPrompt(widget.coach, widget.scenario, focusPoints),
+      voiceName: widget.coach.voice,
     );
     _session = session;
     _syncDuplex();
@@ -247,11 +258,15 @@ class _CallScreenState extends State<CallScreen> {
                 ),
               ),
               const SizedBox(height: 26),
-              _CoachHalo(active: _state == CallState.speaking),
+              _CoachHalo(
+                active: _state == CallState.speaking,
+                coach: widget.coach,
+              ),
               const SizedBox(height: 26),
-              const Text(
-                'Emma',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+              Text(
+                widget.coach.name,
+                style: const TextStyle(
+                    fontSize: 24, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 10),
               Row(
@@ -361,8 +376,9 @@ class _CallScreenState extends State<CallScreen> {
 
 /// Breathing halo around the coach avatar (mockup 02).
 class _CoachHalo extends StatefulWidget {
-  const _CoachHalo({required this.active});
+  const _CoachHalo({required this.active, required this.coach});
   final bool active;
+  final Coach coach;
 
   @override
   State<_CoachHalo> createState() => _CoachHaloState();
@@ -419,23 +435,19 @@ class _CoachHaloState extends State<_CoachHalo>
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Tokens.indigo, Tokens.violet],
-            ),
+            gradient: widget.coach.gradient,
             boxShadow: [
               BoxShadow(
-                color: Tokens.indigo.withValues(
+                color: widget.coach.colors.first.withValues(
                   alpha: widget.active ? 0.55 : 0.35,
                 ),
                 blurRadius: 70,
               ),
             ],
           ),
-          child: const Text(
-            'E',
-            style: TextStyle(
+          child: Text(
+            widget.coach.name[0],
+            style: const TextStyle(
               fontSize: 48,
               fontWeight: FontWeight.w800,
               color: Colors.white,

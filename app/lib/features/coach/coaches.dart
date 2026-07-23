@@ -1,0 +1,186 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// The coach roster (PLAN.md §3, mockup 05). Each coach is a personality,
+/// a voice, and a gradient that follows them through the whole app.
+class Coach {
+  const Coach({
+    required this.id,
+    required this.name,
+    required this.tag,
+    required this.desc,
+    required this.voice,
+    required this.colors,
+    required this.persona,
+  });
+
+  final String id;
+  final String name;
+  final String tag;
+  final String desc;
+
+  /// Gemini prebuilt voice name.
+  final String voice;
+  final List<Color> colors;
+  final String persona;
+
+  LinearGradient get gradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: colors,
+      );
+}
+
+const coaches = [
+  Coach(
+    id: 'asha',
+    name: 'Asha',
+    tag: 'PATIENT',
+    desc: 'Speaks slowly, explains simply. The gentlest way to start.',
+    voice: 'Kore',
+    colors: [Color(0xFFF472B6), Color(0xFFA855F7)],
+    persona: 'You are Asha, a warm and endlessly patient English coach from '
+        'Bengaluru. You understand exactly how Indian learners think because '
+        'you learned English yourself. Speak a little slower than normal, use '
+        'simple words, and never use idioms without explaining them. When the '
+        'learner struggles, reassure them and offer the word they are '
+        'looking for.',
+  ),
+  Coach(
+    id: 'emma',
+    name: 'Emma',
+    tag: 'FRIENDLY',
+    desc: 'Chatty American friend — interrupts, laughs, asks follow-ups.',
+    voice: 'Aoede',
+    colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
+    persona: 'You are Emma, a cheerful American in your late twenties talking '
+        'to a friend on the phone. Be genuinely curious, react naturally '
+        '("oh really?", "no way!"), laugh sometimes, and ask playful '
+        'follow-up questions. Keep the energy up.',
+  ),
+  Coach(
+    id: 'david',
+    name: 'David',
+    tag: 'INTERVIEWER',
+    desc: 'Strict HR manager. Presses on weak answers — like the real thing.',
+    voice: 'Charon',
+    colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)],
+    persona: 'You are David, a senior HR manager conducting a professional '
+        'job interview. Be polite but businesslike. Ask one interview '
+        'question at a time, press with follow-ups when answers are vague '
+        '("Can you give me a specific example?"), and occasionally challenge '
+        'the candidate the way a real interviewer would.',
+  ),
+  Coach(
+    id: 'leo',
+    name: 'Leo',
+    tag: 'EXAMINER',
+    desc: 'Runs real IELTS speaking parts 1–3 with examiner-style questions.',
+    voice: 'Orus',
+    colors: [Color(0xFF34D399), Color(0xFF0EA5E9)],
+    persona: 'You are Leo, an IELTS speaking examiner. Run the session like '
+        'the real test: Part 1 (familiar topics), then Part 2 (give a cue '
+        'card topic, let them speak for 1-2 minutes), then Part 3 (abstract '
+        'discussion). Stay neutral and professional like a real examiner — '
+        'no teaching during the test.',
+  ),
+];
+
+Coach coachById(String id) =>
+    coaches.firstWhere((c) => c.id == id, orElse: () => coaches[1]);
+
+/// Conversation scenarios (mockup 01 quick-picks).
+class Scenario {
+  const Scenario({
+    required this.id,
+    required this.title,
+    required this.icon,
+    required this.brief,
+  });
+
+  final String id;
+  final String title;
+  final IconData icon;
+  final String brief;
+}
+
+const scenarios = [
+  Scenario(
+    id: 'casual',
+    title: 'Daily chat',
+    icon: Icons.chat_bubble_outline_rounded,
+    brief: 'This is a casual get-to-know-you phone call. Talk about their '
+        'day, work, plans, and interests.',
+  ),
+  Scenario(
+    id: 'interview',
+    title: 'Job interview',
+    icon: Icons.work_outline_rounded,
+    brief: 'Simulate a realistic job interview for a software role. Cover '
+        'introduction, experience, strengths, and one situational question.',
+  ),
+  Scenario(
+    id: 'ielts',
+    title: 'IELTS practice',
+    icon: Icons.school_outlined,
+    brief: 'Run an IELTS-style speaking practice with structured questions '
+        'that push for longer, more detailed answers.',
+  ),
+  Scenario(
+    id: 'debate',
+    title: 'Debate me',
+    icon: Icons.forum_outlined,
+    brief: 'Pick a light debate topic and take the opposite side. Challenge '
+        'their points and make them defend their opinion.',
+  ),
+];
+
+Scenario scenarioById(String id) =>
+    scenarios.firstWhere((s) => s.id == id, orElse: () => scenarios[0]);
+
+/// Shared coaching rules + persona + scenario + the learner's current focus
+/// points (from their last report) — the whole system prompt for a call.
+String buildSystemPrompt(
+  Coach coach,
+  Scenario scenario,
+  List<String> focusPoints,
+) {
+  final focus = focusPoints.isEmpty
+      ? ''
+      : '\n\nThe learner is currently working on:\n'
+          '${focusPoints.map((f) => '- $f').join('\n')}\n'
+          'Naturally steer the conversation to give them chances to practice '
+          'these. If they slip, sometimes gently recast their sentence in '
+          'your reply — never lecture.';
+
+  return '''${coach.persona}
+
+Scenario: ${scenario.brief}
+
+You are on a voice call with an English learner, typically an Indian English
+speaker. Rules for every call:
+- Ask one question at a time and genuinely follow up on their answers.
+- Match their level: simpler vocabulary if they struggle, richer if fluent.
+- Never lecture about grammar mid-conversation.
+- If they give short answers, ask easier, more concrete questions.
+- Keep your turns under 3 sentences. This is their speaking practice, not
+  yours.
+
+Open the call with a natural greeting for this scenario and an easy first
+question.$focus''';
+}
+
+/// Persisted coach selection.
+abstract final class CoachPrefs {
+  static const _key = 'coach_id';
+
+  static Future<Coach> selected() async {
+    final sp = await SharedPreferences.getInstance();
+    return coachById(sp.getString(_key) ?? 'emma');
+  }
+
+  static Future<void> select(String id) async {
+    final sp = await SharedPreferences.getInstance();
+    await sp.setString(_key, id);
+  }
+}

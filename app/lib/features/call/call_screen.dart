@@ -133,14 +133,20 @@ class _CallScreenState extends State<CallScreen> {
     final grant = _grant;
     if (grant == null) return;
     _flushFragment();
-    try {
-      await Api.endCall(
-        callId: grant.callId,
-        durationS: _seconds,
-        turns: _turns,
-      );
-    } catch (e) {
-      debugPrint('call: end report failed: $e');
+    // The transcript is the product — retry hard before giving up, the
+    // network may be mid-blip (often the reason the call ended at all).
+    for (var attempt = 1; attempt <= 4; attempt++) {
+      try {
+        await Api.endCall(
+          callId: grant.callId,
+          durationS: _seconds,
+          turns: _turns,
+        );
+        return;
+      } catch (e) {
+        debugPrint('call: end report attempt $attempt failed: $e');
+        if (attempt < 4) await Future.delayed(Duration(seconds: 3 * attempt));
+      }
     }
   }
 
@@ -174,16 +180,30 @@ class _CallScreenState extends State<CallScreen> {
         _turnBuffer = '';
         setState(() => _state = CallState.listening);
       case SessionError(:final message):
-        setState(() {
-          _state = CallState.error;
-          _errorMessage = message;
-        });
+        // Mid-call failure with real material → wrap up like a hangup so
+        // the transcript isn't lost. Failure at connect → show the error.
+        if (_seconds > 5 && _turns.isNotEmpty) {
+          unawaited(_endCall());
+        } else {
+          setState(() {
+            _state = CallState.error;
+            _errorMessage = message;
+          });
+        }
       case SessionClosed():
-        setState(() => _state = CallState.ended);
+        // Remote end (network drop / provider session limit): treat exactly
+        // like the user hanging up — upload transcript, go to the report.
+        unawaited(_endCall());
     }
   }
 
+  bool _ending = false;
+
+  /// Reached from the End button, remote close, and mid-call errors —
+  /// must run exactly once.
   Future<void> _endCall() async {
+    if (_ending) return;
+    _ending = true;
     _ticker?.cancel();
     await _sub?.cancel();
     await _session?.stop();

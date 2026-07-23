@@ -188,6 +188,13 @@ class GeminiLiveSession implements VoiceSession {
       return;
     }
 
+    if (msg.containsKey('goAway')) {
+      // Server will close soon (session limit). Distinguishes provider
+      // limits from network drops in the logs.
+      debugPrint('live: goAway received: ${msg['goAway']}');
+      return;
+    }
+
     final serverContent = msg['serverContent'] as Map<String, dynamic>?;
     if (serverContent == null) return;
 

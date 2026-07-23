@@ -19,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Limits? _limits;
   bool _limitsFailed = false;
+  bool _offline = false;
   Timer? _retry;
   List<String> _workingOn = const [];
   Coach _coach = coaches[1];
@@ -64,9 +65,15 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _limitsFailed = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      setState(() => _limitsFailed = true);
+      setState(() {
+        _limitsFailed = true;
+        // DNS/socket failures mean the phone has no internet at all —
+        // that's a different message than "our server is down".
+        _offline = e.toString().contains('SocketException') ||
+            e.toString().contains('Failed host lookup');
+      });
       _retry = Timer(const Duration(seconds: 5), _loadLimits);
     }
   }
@@ -115,7 +122,9 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       (final Limits l, _, _) =>
         '${(l.remainingSeconds / 60).ceil()} of ${l.allowanceSeconds ~/ 60} '
             'min left today',
-      (null, true, _) => "Can't reach the server — calls may not start",
+      (null, true, _) => _offline
+          ? 'No internet connection — check WiFi or mobile data'
+          : "Can't reach the server — calls may not start",
       (null, _, false) => 'Dev mode — no metering',
       _ => 'Checking your minutes…',
     };

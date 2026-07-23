@@ -26,6 +26,8 @@ class SessionGrant {
     required this.tokenKind,
     required this.remainingSeconds,
     required this.focusPoints,
+    required this.memory,
+    required this.lastCallDaysAgo,
   });
 
   final String callId;
@@ -36,6 +38,10 @@ class SessionGrant {
 
   /// From the user's latest report — woven into the coach's prompt.
   final List<String> focusPoints;
+
+  /// What the coach "remembers" about this learner from recent calls.
+  final String memory;
+  final int? lastCallDaysAgo;
 }
 
 class Limits {
@@ -140,6 +146,8 @@ abstract final class Api {
       focusPoints: ((data['focus_points'] as List?) ?? [])
           .map((e) => e.toString())
           .toList(),
+      memory: (data['memory'] as String?) ?? '',
+      lastCallDaysAgo: data['last_call_days_ago'] as int?,
     );
   }
 

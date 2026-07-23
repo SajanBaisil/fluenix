@@ -36,6 +36,11 @@ Rules:
   85+ near-fluent. overall is a weighted feel, not an average.
 - If the learner spoke very little, score what you can and say so in
   focus_points.
+- memory: 2-4 sentences of notes the coach will read before the NEXT call,
+  written in third person. Capture personal facts the learner shared (job,
+  city, family, plans, upcoming events), the main topics discussed, and
+  anything worth following up on ("has an interview next week"). Only facts
+  from this transcript — never invent.
 - Never invent quotes that are not in the transcript."""
 
 _SCHEMA = {
@@ -48,6 +53,7 @@ _SCHEMA = {
         "filler_words",
         "focus_points",
         "headline",
+        "memory",
     ],
     "properties": {
         "overall": {"type": "INTEGER"},
@@ -98,6 +104,11 @@ _SCHEMA = {
             },
         },
         "focus_points": {"type": "ARRAY", "items": {"type": "STRING"}},
+        "memory": {
+            "type": "STRING",
+            "description": "Third-person notes for the coach before the next "
+            "call: personal facts shared, topics discussed, follow-ups.",
+        },
     },
 }
 
@@ -168,4 +179,5 @@ async def analyze_transcript(turns: list[dict[str, Any]]) -> dict[str, Any]:
         "filler_words": report.get("filler_words")
         or {"count": 0, "words": []},
         "focus_points": (report.get("focus_points") or [])[:3],
+        "memory": str(report.get("memory") or "")[:600],
     }

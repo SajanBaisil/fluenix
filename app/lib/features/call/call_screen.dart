@@ -103,8 +103,13 @@ class _CallScreenState extends State<CallScreen> {
       model: model,
       token: token,
       isEphemeral: isEphemeral,
-      systemPrompt:
-          buildSystemPrompt(widget.coach, widget.scenario, focusPoints),
+      systemPrompt: buildSystemPrompt(
+        widget.coach,
+        widget.scenario,
+        focusPoints,
+        memory: _grant?.memory ?? '',
+        lastCallDaysAgo: _grant?.lastCallDaysAgo,
+      ),
       voiceName: widget.coach.voice,
     );
     _session = session;

@@ -35,26 +35,44 @@ class SessionResponse(BaseModel):
     token_kind: Literal["ephemeral", "dev_raw_key"]
     expire_time: str | None
     remaining_seconds: int
-    # From the user's most recent report — the app weaves these into the
-    # coach's system prompt so each call practices what the last one exposed.
+    # From the user's recent reports — the app weaves these into the coach's
+    # system prompt: what to practice, and what the coach "remembers".
     focus_points: list[str] = []
+    memory: str = ""
+    last_call_days_ago: int | None = None
 
 
-async def _latest_focus_points(user_id: str) -> list[str]:
+async def _coaching_context(user_id: str) -> dict[str, Any]:
+    """Focus points from the latest report + merged memory of recent calls."""
+    empty: dict[str, Any] = {
+        "focus_points": [],
+        "memory": "",
+        "last_call_days_ago": None,
+    }
     try:
         rows = await supa.select(
             "reports",
-            columns="focus_points,calls!inner(user_id)",
+            columns="focus_points,memory,created_at,calls!inner(user_id)",
             filters={
                 "calls.user_id": f"eq.{user_id}",
                 "order": "created_at.desc",
-                "limit": "1",
+                "limit": "3",
             },
         )
-        return list(rows[0].get("focus_points") or [])[:3] if rows else []
+        if not rows:
+            return empty
+        memories = [m for r in rows if (m := (r.get("memory") or "").strip())]
+        last_at = datetime.fromisoformat(rows[0]["created_at"])
+        days = (datetime.now(UTC) - last_at).days
+        return {
+            "focus_points": list(rows[0].get("focus_points") or [])[:3],
+            # Newest first; the model treats earlier sentences as fresher.
+            "memory": " ".join(memories)[:800],
+            "last_call_days_ago": max(0, days),
+        }
     except Exception:
-        logger.exception("focus point lookup failed for %s", user_id)
-        return []
+        logger.exception("coaching context lookup failed for %s", user_id)
+        return empty
 
 
 async def _tier(user_id: str) -> str:
@@ -108,6 +126,7 @@ async def create_session(body: SessionRequest, user_id: UserId) -> SessionRespon
             raise HTTPException(502, {"code": "token_mint_failed"}) from e
         token, kind, expire = settings().gemini_api_key, "dev_raw_key", None
 
+    context = await _coaching_context(user_id)
     return SessionResponse(
         call_id=call["id"],
         provider="gemini_live",
@@ -116,7 +135,9 @@ async def create_session(body: SessionRequest, user_id: UserId) -> SessionRespon
         token_kind=kind,  # type: ignore[arg-type]
         expire_time=expire,
         remaining_seconds=remaining,
-        focus_points=await _latest_focus_points(user_id),
+        focus_points=context["focus_points"],
+        memory=context["memory"],
+        last_call_days_ago=context["last_call_days_ago"],
     )
 
 

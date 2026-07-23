@@ -143,8 +143,10 @@ Scenario scenarioById(String id) =>
 String buildSystemPrompt(
   Coach coach,
   Scenario scenario,
-  List<String> focusPoints,
-) {
+  List<String> focusPoints, {
+  String memory = '',
+  int? lastCallDaysAgo,
+}) {
   final focus = focusPoints.isEmpty
       ? ''
       : '\n\nThe learner is currently working on:\n'
@@ -152,6 +154,23 @@ String buildSystemPrompt(
           'Naturally steer the conversation to give them chances to practice '
           'these. If they slip, sometimes gently recast their sentence in '
           'your reply — never lecture.';
+
+  var continuity = '';
+  if (memory.isNotEmpty) {
+    final when = switch (lastCallDaysAgo) {
+      null => 'recently',
+      0 => 'earlier today',
+      1 => 'yesterday',
+      final d => '$d days ago',
+    };
+    continuity = '\n\nYou have spoken with this learner before (last call '
+        '$when). What you remember about them:\n$memory\n'
+        'Open the call like a friend who remembers them: welcome them back '
+        'warmly and follow up on something specific from what you remember '
+        'before moving to new topics. Keep it brief and natural — one '
+        'welcome-back line, one follow-up question. In interview or exam '
+        'scenarios keep the welcome short and professional.';
+  }
 
   return '''${coach.persona}
 
@@ -167,7 +186,7 @@ speaker. Rules for every call:
   yours.
 
 Open the call with a natural greeting for this scenario and an easy first
-question.$focus''';
+question.$focus$continuity''';
 }
 
 /// Persisted coach selection.

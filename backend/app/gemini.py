@@ -30,9 +30,12 @@ async def mint_live_token() -> dict[str, Any]:
         "newSessionExpireTime": (now + timedelta(minutes=2)).isoformat(),
         # ...and the call itself can run until this hard stop.
         "expireTime": (now + timedelta(minutes=35)).isoformat(),
-        # Locks the token to our Live model (field verified against the live
-        # API 2026-07-23; the docs' older `liveConnectConstraints` is gone).
-        "bidiGenerateContentSetup": {"model": settings().live_model},
+        # NOTE: no bidiGenerateContentSetup lock — a locked setup makes the
+        # Constrained websocket close 1011 when the client sends its own
+        # setup (verified 2026-07-23). Single-use + short expiry is the
+        # security boundary; the client connects to
+        # .../v1alpha.GenerativeService.BidiGenerateContentConstrained with
+        # header `Authorization: Token <name>`.
     }
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(

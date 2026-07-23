@@ -31,10 +31,6 @@ class SessionGrant {
   final String token;
   final String tokenKind; // 'ephemeral' | 'dev_raw_key'
   final int remainingSeconds;
-
-  /// Query-string auth for the Live websocket.
-  String get authQuery =>
-      tokenKind == 'ephemeral' ? 'access_token=$token' : 'key=$token';
 }
 
 class Limits {

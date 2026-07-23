@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../config.dart';
@@ -18,20 +19,25 @@ import 'voice_session.dart';
 ///    `modelTurn.parts[].inlineData` (base64 PCM16 @24 kHz),
 ///    `interrupted`, `turnComplete`, input/output transcriptions.
 class GeminiLiveSession implements VoiceSession {
-  /// [authQuery] is the websocket auth query-string: `access_token=<ephemeral>`
-  /// from the backend, or `key=<api key>` in dev fallback.
+  /// Ephemeral backend tokens use the v1alpha `Constrained` endpoint with an
+  /// `Authorization: Token …` header; a raw dev key uses v1beta `?key=`.
   GeminiLiveSession({
     required this.model,
-    required this.authQuery,
+    required this.token,
+    required this.isEphemeral,
     MicStream? mic,
   }) : _mic = mic ?? MicStream();
 
-  static const _endpoint =
+  static const _keyEndpoint =
       'wss://generativelanguage.googleapis.com/ws/'
       'google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
+  static const _tokenEndpoint =
+      'wss://generativelanguage.googleapis.com/ws/'
+      'google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained';
 
   final String model;
-  final String authQuery;
+  final String token;
+  final bool isEphemeral;
   final MicStream _mic;
   final _events = StreamController<VoiceEvent>.broadcast();
 
@@ -55,9 +61,12 @@ class GeminiLiveSession implements VoiceSession {
 
   @override
   Future<void> start() async {
-    final channel = WebSocketChannel.connect(
-      Uri.parse('$_endpoint?$authQuery'),
-    );
+    final channel = isEphemeral
+        ? IOWebSocketChannel.connect(
+            Uri.parse(_tokenEndpoint),
+            headers: {'Authorization': 'Token $token'},
+          )
+        : WebSocketChannel.connect(Uri.parse('$_keyEndpoint?key=$token'));
     _channel = channel;
 
     channel.stream.listen(

@@ -62,12 +62,14 @@ class _CallScreenState extends State<CallScreen> {
     await _route.initForCall();
 
     String model;
-    String authQuery;
+    String token;
+    bool isEphemeral;
     try {
       final grant = await Api.startSession();
       _grant = grant;
       model = grant.model;
-      authQuery = grant.authQuery;
+      token = grant.token;
+      isEphemeral = grant.tokenKind == 'ephemeral';
     } on OutOfMinutesException {
       setState(() {
         _state = CallState.error;
@@ -85,10 +87,15 @@ class _CallScreenState extends State<CallScreen> {
         return;
       }
       model = 'models/gemini-3.1-flash-live-preview';
-      authQuery = 'key=${Config.geminiApiKey}';
+      token = Config.geminiApiKey;
+      isEphemeral = false;
     }
 
-    final session = GeminiLiveSession(model: model, authQuery: authQuery);
+    final session = GeminiLiveSession(
+      model: model,
+      token: token,
+      isEphemeral: isEphemeral,
+    );
     _session = session;
     _syncDuplex();
     _sub = session.events.listen(_onEvent);

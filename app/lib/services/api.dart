@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -66,35 +67,68 @@ abstract final class Api {
             'Bearer ${Supabase.instance.client.auth.currentSession?.accessToken ?? ''}',
       };
 
-  static Future<Limits> limits() async {
-    final resp = await http
-        .get(_u('/v1/me/limits'), headers: _headers)
-        .timeout(const Duration(seconds: 8));
-    if (resp.statusCode != 200) {
-      throw ApiException('limits failed: ${resp.statusCode}');
+  /// 401 usually means a stale access token — refresh the session once and
+  /// retry before giving up.
+  static Future<http.Response> _getWithRefresh(Uri url) async {
+    var resp = await http
+        .get(url, headers: _headers)
+        .timeout(const Duration(seconds: 15));
+    if (resp.statusCode == 401) {
+      debugPrint('api: 401 from $url — refreshing session and retrying');
+      await Supabase.instance.client.auth.refreshSession();
+      resp = await http
+          .get(url, headers: _headers)
+          .timeout(const Duration(seconds: 15));
     }
-    final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    return Limits(
-      tier: data['tier'] as String,
-      allowanceSeconds: data['daily_allowance_seconds'] as int,
-      remainingSeconds: data['remaining_seconds'] as int,
-    );
+    return resp;
+  }
+
+  static Future<Limits> limits() async {
+    try {
+      final resp = await _getWithRefresh(_u('/v1/me/limits'));
+      if (resp.statusCode != 200) {
+        debugPrint(
+            'api: limits ${resp.statusCode}: ${resp.body.substring(0, resp.body.length.clamp(0, 200))}');
+        throw ApiException('limits failed: ${resp.statusCode}');
+      }
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      return Limits(
+        tier: data['tier'] as String,
+        allowanceSeconds: data['daily_allowance_seconds'] as int,
+        remainingSeconds: data['remaining_seconds'] as int,
+      );
+    } catch (e) {
+      debugPrint('api: limits error: $e');
+      rethrow;
+    }
   }
 
   static Future<SessionGrant> startSession({
     String scenario = 'casual',
     String persona = 'emma',
   }) async {
-    final resp = await http
+    var resp = await http
         .post(
           _u('/v1/session'),
           headers: _headers,
           body: jsonEncode({'scenario': scenario, 'persona': persona}),
         )
-        .timeout(const Duration(seconds: 12));
+        .timeout(const Duration(seconds: 20));
+    if (resp.statusCode == 401) {
+      debugPrint('api: session 401 — refreshing session and retrying');
+      await Supabase.instance.client.auth.refreshSession();
+      resp = await http
+          .post(
+            _u('/v1/session'),
+            headers: _headers,
+            body: jsonEncode({'scenario': scenario, 'persona': persona}),
+          )
+          .timeout(const Duration(seconds: 20));
+    }
     if (resp.statusCode == 429) throw const OutOfMinutesException();
     if (resp.statusCode != 200) {
-      throw ApiException('session failed: ${resp.statusCode} ${resp.body}');
+      debugPrint('api: session ${resp.statusCode}: ${resp.body.substring(0, resp.body.length.clamp(0, 200))}');
+      throw ApiException('session failed: ${resp.statusCode}');
     }
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
     return SessionGrant(

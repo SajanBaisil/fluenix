@@ -1,12 +1,18 @@
+import logging
 from datetime import UTC, date, datetime
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
-from .. import gemini, supa
+from .. import analysis, gemini, supa
 from ..auth import UserId
 from ..config import settings
+
+logger = logging.getLogger(__name__)
+
+# Below this, there isn't enough learner speech to analyze meaningfully.
+MIN_ANALYSIS_WORDS = 15
 
 router = APIRouter(prefix="/v1")
 
@@ -109,7 +115,12 @@ class EndCallRequest(BaseModel):
 
 
 @router.post("/calls/{call_id}/end")
-async def end_call(call_id: str, body: EndCallRequest, user_id: UserId) -> dict[str, Any]:
+async def end_call(
+    call_id: str,
+    body: EndCallRequest,
+    user_id: UserId,
+    background: BackgroundTasks,
+) -> dict[str, Any]:
     calls = await supa.select(
         "calls", filters={"id": f"eq.{call_id}", "user_id": f"eq.{user_id}"}
     )
@@ -144,9 +155,30 @@ async def end_call(call_id: str, body: EndCallRequest, user_id: UserId) -> dict[
         )
 
     await _bump_daily_rollup(user_id, body.duration_s)
-    # Analysis pipeline (Claude) picks 'ended' calls up in the week 6–7
-    # milestone; until then reports simply don't exist yet.
-    return {"ok": True, "status": "ended"}
+
+    turns = [t.model_dump() for t in body.turns]
+    learner_words = sum(
+        len(t["text"].split()) for t in turns if t["role"] == "user"
+    )
+    will_analyze = learner_words >= MIN_ANALYSIS_WORDS
+    if will_analyze:
+        background.add_task(_run_analysis, call_id, turns)
+    return {"ok": True, "status": "ended", "analyzing": will_analyze}
+
+
+async def _run_analysis(call_id: str, turns: list[dict[str, Any]]) -> None:
+    try:
+        report = await analysis.analyze_transcript(turns)
+        await supa.insert("reports", {"call_id": call_id, **report})
+        await supa.update(
+            "calls",
+            filters={"id": f"eq.{call_id}"},
+            patch={"status": "analyzed"},
+        )
+        logger.info("analysis done for call %s", call_id)
+    except Exception:
+        # Call stays 'ended'; the app's report screen times out gracefully.
+        logger.exception("analysis failed for call %s", call_id)
 
 
 async def _bump_daily_rollup(user_id: str, duration_s: int) -> None:

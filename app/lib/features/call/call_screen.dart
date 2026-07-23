@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../config.dart';
 import '../../services/api.dart';
 import '../../theme/app_theme.dart';
+import '../report/report_screen.dart';
 import '../../voice/audio_io.dart';
 import '../../voice/audio_route.dart';
 import '../../voice/gemini_live_session.dart';
@@ -103,13 +104,17 @@ class _CallScreenState extends State<CallScreen> {
     _frag.write(text);
   }
 
-  Future<void> _reportCallEnd() async {
-    final grant = _grant;
-    if (grant == null) return;
+  void _flushFragment() {
     if (_frag.isNotEmpty) {
       _turns.add(TranscriptTurn(role: _fragRole, text: _frag.toString().trim()));
       _frag.clear();
     }
+  }
+
+  Future<void> _reportCallEnd() async {
+    final grant = _grant;
+    if (grant == null) return;
+    _flushFragment();
     try {
       await Api.endCall(
         callId: grant.callId,
@@ -166,10 +171,24 @@ class _CallScreenState extends State<CallScreen> {
     await _session?.stop();
     await _player.dispose();
     await _route.dispose();
-    // Ship duration + transcript to the backend; the report pipeline
-    // (weeks 6–7) picks it up from there. Don't block the UI on it.
+    final grant = _grant;
+    _flushFragment();
+    final learnerWords = _turns
+        .where((t) => t.role == 'user')
+        .fold(0, (n, t) => n + t.text.split(' ').length);
+    // Ship duration + transcript; the backend starts analyzing immediately.
     unawaited(_reportCallEnd());
-    if (mounted) Navigator.of(context).pop();
+    if (!mounted) return;
+    if (grant != null && learnerWords >= 15) {
+      // Enough material for a report — go wait for it.
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => ReportScreen(callId: grant.callId),
+        ),
+      );
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

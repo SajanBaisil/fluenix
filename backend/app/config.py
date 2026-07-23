@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     # Gemini
     gemini_api_key: str
     live_model: str = "models/gemini-3.1-flash-live-preview"
+    # Post-call analysis (text). Provider-neutral seam: see analysis.py.
+    analysis_model: str = "models/gemini-3-flash-preview"
 
     # Metering (seconds per day, IST day boundary — see call_seconds_today())
     free_daily_seconds: int = 300  # 5 min/day (PLAN.md §7 free tier)

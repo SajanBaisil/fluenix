@@ -64,6 +64,34 @@ class TranscriptTurn {
   Map<String, Object> toJson() => {'role': role, 'text': text};
 }
 
+class PracticeExercise {
+  const PracticeExercise({
+    required this.kind,
+    required this.prompt,
+    required this.answer,
+    required this.why,
+  });
+
+  final String kind; // 'fix' | 'choose' | 'upgrade'
+  final String prompt;
+  final String answer;
+  final String why;
+}
+
+class PracticePack {
+  const PracticePack({
+    required this.exercises,
+    required this.mistakes,
+    required this.vocab,
+  });
+
+  final List<PracticeExercise> exercises;
+  final List<Map<String, dynamic>> mistakes; // {said, better, why}
+  final List<Map<String, dynamic>> vocab; // {used, better}
+
+  bool get isEmpty => exercises.isEmpty && mistakes.isEmpty && vocab.isEmpty;
+}
+
 abstract final class Api {
   static Uri _u(String path) => Uri.parse('${Config.backendUrl}$path');
 
@@ -148,6 +176,34 @@ abstract final class Api {
           .toList(),
       memory: (data['memory'] as String?) ?? '',
       lastCallDaysAgo: data['last_call_days_ago'] as int?,
+    );
+  }
+
+  static Future<PracticePack> practice() async {
+    final resp = await _getWithRefresh(_u('/v1/practice'))
+        .timeout(const Duration(seconds: 60));
+    if (resp.statusCode != 200) {
+      debugPrint('api: practice ${resp.statusCode}');
+      throw ApiException('practice failed: ${resp.statusCode}');
+    }
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    List<Map<String, dynamic>> maps(String key) =>
+        ((data[key] as List?) ?? [])
+            .whereType<Map>()
+            .map((e) => e.cast<String, dynamic>())
+            .toList();
+    return PracticePack(
+      exercises: [
+        for (final e in maps('exercises'))
+          PracticeExercise(
+            kind: (e['kind'] ?? '') as String,
+            prompt: (e['prompt'] ?? '') as String,
+            answer: (e['answer'] ?? '') as String,
+            why: (e['why'] ?? '') as String,
+          ),
+      ],
+      mistakes: maps('source_mistakes'),
+      vocab: maps('source_vocab'),
     );
   }
 

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .routes.practice import router as practice_router
 from .routes.session import router as session_router
 
 app = FastAPI(title="Fluenix API", version="0.1.0")
@@ -14,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(session_router)
+app.include_router(practice_router)
 
 
 @app.get("/healthz")

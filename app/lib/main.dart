@@ -5,6 +5,7 @@ import 'config.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/coach/coach_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/practice/practice_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -61,6 +62,7 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
   final _homeKey = GlobalKey<HomeScreenState>();
+  final _practiceKey = GlobalKey<PracticeScreenState>();
   final _progressKey = GlobalKey<ProgressScreenState>();
 
   @override
@@ -71,6 +73,7 @@ class _HomeShellState extends State<HomeShell> {
         children: [
           HomeScreen(key: _homeKey),
           const CoachScreen(),
+          PracticeScreen(key: _practiceKey),
           ProgressScreen(key: _progressKey),
         ],
       ),
@@ -100,7 +103,8 @@ class _HomeShellState extends State<HomeShell> {
             setState(() => _tab = i);
             // Coming back to a tab → refresh its data.
             if (i == 0) _homeKey.currentState?.refresh();
-            if (i == 2) _progressKey.currentState?.refresh();
+            if (i == 2) _practiceKey.currentState?.refresh();
+            if (i == 3) _progressKey.currentState?.refresh();
           },
           destinations: const [
             NavigationDestination(
@@ -110,6 +114,10 @@ class _HomeShellState extends State<HomeShell> {
             NavigationDestination(
               icon: Icon(Icons.groups_rounded),
               label: 'Coaches',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.fitness_center_rounded),
+              label: 'Practice',
             ),
             NavigationDestination(
               icon: Icon(Icons.insights_rounded),

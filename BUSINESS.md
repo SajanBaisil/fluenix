@@ -72,10 +72,13 @@ goFluent/Speexx sell to global L&D at global prices with human-coach cost struct
 
 ## 4. What this means for the build queue
 
+> **Decision (24 Jul 2026): B2C only for now.** The enterprise track (org
+> accounts, cohorts, admin dashboard — §3) is shelved by founder call; §1–2
+> remain as the competitive reference. Revisit only if inbound interest shows.
+
 | Priority | Item | Status |
 |---|---|---|
-| 1 | Practice section (mistakes → drills → next call) | **building now** — it completes the differentiator loop |
-| 2 | Onboarding (level/goal → calibrated coaching from call one) | next |
-| 3 | Paywall + RevenueCat (B2C revenue) | after onboarding |
-| 4 | Org accounts + cohort schema | when first college conversation is scheduled |
-| 5 | Admin dashboard (web) | after dashboard spec is validated with a real T&P officer |
+| 1 | Practice section (mistakes → drills → next call) | ✅ shipped |
+| 2 | Onboarding (level/goal → calibrated coaching from call one) | ✅ shipped |
+| 3 | Paywall + RevenueCat (B2C revenue) | next — needs Play Console + RevenueCat accounts |
+| 4 | Store prep: SMTP + email confirm, privacy policy, listing assets | after paywall |

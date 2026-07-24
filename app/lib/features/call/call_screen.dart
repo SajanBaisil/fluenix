@@ -15,9 +15,18 @@ import '../../voice/voice_session.dart';
 enum CallState { connecting, listening, speaking, ended, error }
 
 class CallScreen extends StatefulWidget {
-  const CallScreen({super.key, required this.coach, required this.scenario});
+  const CallScreen({
+    super.key,
+    required this.coach,
+    required this.scenario,
+    this.scenarioContext = '',
+  });
+
   final Coach coach;
   final Scenario scenario;
+
+  /// Extra session context, e.g. a pasted job description for interviews.
+  final String scenarioContext;
 
   @override
   State<CallScreen> createState() => _CallScreenState();
@@ -32,8 +41,11 @@ class _CallScreenState extends State<CallScreen> {
   CallState _state = CallState.connecting;
   String _caption = '';
   String _turnBuffer = '';
+  String _userCaption = '';
+  String _userBuffer = '';
   String _errorMessage = '';
   bool _muted = false;
+  bool _ccOn = true;
   int _seconds = 0;
   Timer? _ticker;
 
@@ -109,6 +121,7 @@ class _CallScreenState extends State<CallScreen> {
         focusPoints,
         memory: _grant?.memory ?? '',
         lastCallDaysAgo: _grant?.lastCallDaysAgo,
+        scenarioContext: widget.scenarioContext,
       ),
       voiceName: widget.coach.voice,
     );
@@ -177,13 +190,24 @@ class _CallScreenState extends State<CallScreen> {
         setState(() => _caption = _turnBuffer);
       case UserTranscript(:final text):
         _addFragment('user', text);
+        // Live caption of the learner's own recognized words.
+        _userBuffer += text;
+        setState(() => _userCaption = _userBuffer);
       case Interrupted():
         unawaited(_player.flush());
         _turnBuffer = '';
-        setState(() => _state = CallState.listening);
+        _userBuffer = '';
+        setState(() {
+          _state = CallState.listening;
+          _userCaption = '';
+        });
       case TurnComplete():
         _turnBuffer = '';
-        setState(() => _state = CallState.listening);
+        _userBuffer = '';
+        setState(() {
+          _state = CallState.listening;
+          _userCaption = '';
+        });
       case SessionError(:final message):
         // Mid-call failure with real material → wrap up like a hangup so
         // the transcript isn't lost. Failure at connect → show the error.
@@ -310,21 +334,54 @@ class _CallScreenState extends State<CallScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 26),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 48),
-                child: Text(
-                  _state == CallState.error ? _errorMessage : _caption,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color:
-                        _state == CallState.error ? Tokens.rose : Tokens.muted,
-                    fontSize: 14,
-                    height: 1.6,
-                  ),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: _state == CallState.error
+                    ? Text(
+                        _errorMessage,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Tokens.rose,
+                          fontSize: 14,
+                          height: 1.6,
+                        ),
+                      )
+                    : !_ccOn
+                        ? const SizedBox.shrink()
+                        : Column(
+                            children: [
+                              if (_caption.isNotEmpty)
+                                Text(
+                                  _caption,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Tokens.muted,
+                                    fontSize: 14,
+                                    height: 1.6,
+                                  ),
+                                ),
+                              if (_userCaption.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Text(
+                                  'You: $_userCaption',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Tokens.indigoSoft,
+                                    fontSize: 13,
+                                    height: 1.55,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
               ),
               const Spacer(),
               Row(
@@ -357,6 +414,12 @@ class _CallScreenState extends State<CallScreen> {
                       active: r != CallAudioRoute.earpiece,
                       onTap: _toggleSpeaker,
                     ),
+                  ),
+                  const SizedBox(width: 16),
+                  _CtlButton(
+                    icon: Icons.closed_caption_rounded,
+                    active: _ccOn,
+                    onTap: () => setState(() => _ccOn = !_ccOn),
                   ),
                 ],
               ),

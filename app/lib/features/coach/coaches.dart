@@ -148,6 +148,7 @@ String buildSystemPrompt(
   List<String> focusPoints, {
   String memory = '',
   int? lastCallDaysAgo,
+  String scenarioContext = '',
 }) {
   final focus = focusPoints.isEmpty
       ? ''
@@ -194,9 +195,14 @@ String buildSystemPrompt(
         'scenarios keep the welcome short and professional.';
   }
 
+  final context = scenarioContext.trim().isEmpty
+      ? ''
+      : '\n\nSpecific context for this session (use it — reference the '
+          'actual role/company/details naturally):\n${scenarioContext.trim()}';
+
   return '''${coach.persona}
 
-Scenario: ${scenario.brief}
+Scenario: ${scenario.brief}$context
 
 You are on a voice call with an English learner, typically an Indian English
 speaker. Rules for every call:

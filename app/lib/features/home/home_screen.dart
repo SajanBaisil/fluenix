@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config.dart';
 import '../../services/api.dart';
 import '../../services/profile.dart';
+import '../../services/reminders.dart';
 import '../../theme/app_theme.dart';
 import '../call/call_screen.dart';
 import '../coach/coaches.dart';
@@ -24,6 +26,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Timer? _retry;
   List<String> _workingOn = const [];
   Coach _coach = coaches[1];
+  TimeOfDay? _reminderTime;
 
   bool get _hasBackend =>
       Config.supabaseUrl.isNotEmpty && Config.backendUrl.isNotEmpty;
@@ -51,6 +54,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> refresh() async {
     _coach = await CoachPrefs.selected();
     await ProfileService.load();
+    _reminderTime = await Reminders.scheduledTime();
     if (mounted) setState(() {});
     unawaited(_loadLimits());
     unawaited(_loadFocus());
@@ -103,14 +107,157 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _startCall(Scenario scenario) {
+  void _startCall(Scenario scenario, {String scenarioContext = ''}) {
     Navigator.of(context)
         .push(
           MaterialPageRoute<void>(
-            builder: (_) => CallScreen(coach: _coach, scenario: scenario),
+            builder: (_) => CallScreen(
+              coach: _coach,
+              scenario: scenario,
+              scenarioContext: scenarioContext,
+            ),
           ),
         )
         .then((_) => refresh());
+  }
+
+  /// Pick (or clear) the daily "coach calls you" time.
+  Future<void> _pickReminderTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime ?? const TimeOfDay(hour: 19, minute: 0),
+      helpText: 'When should ${_coach.name} call you?',
+      cancelText: _reminderTime == null ? 'Cancel' : 'Turn off',
+    );
+    if (!mounted) return;
+    if (picked == null) {
+      // "Turn off" / dismiss: only clear if one was set.
+      if (_reminderTime != null) {
+        await Reminders.cancel();
+        setState(() => _reminderTime = null);
+        _toast('Daily call turned off');
+      }
+      return;
+    }
+    final ok = await Reminders.schedule(picked, _coach.name);
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _reminderTime = picked);
+      _toast('${_coach.name} will call you daily at '
+          '${picked.format(context)}');
+    } else {
+      _toast('Notifications are blocked — allow them in Settings');
+    }
+  }
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  /// Interview calls can be tailored: role, company, or a pasted JD.
+  Future<void> _startInterview(Scenario scenario) async {
+    final sp = await SharedPreferences.getInstance();
+    final controller =
+        TextEditingController(text: sp.getString('last_jd') ?? '');
+    if (!mounted) return;
+    final result = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Tokens.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+            22, 20, 22, 22 + MediaQuery.of(sheetContext).viewInsets.bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Make it your interview',
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              'Role, company, or paste the job description — the '
+              'interviewer will use it. Optional.',
+              style: TextStyle(fontSize: 12.5, color: Tokens.muted),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: controller,
+              maxLines: 5,
+              minLines: 2,
+              maxLength: 1500,
+              style: const TextStyle(fontSize: 13.5, height: 1.5),
+              decoration: InputDecoration(
+                counterText: '',
+                hintText:
+                    'e.g. Senior Flutter Developer at TCS…\nor paste the JD',
+                hintStyle:
+                    const TextStyle(color: Tokens.faint, fontSize: 13),
+                filled: true,
+                fillColor: Tokens.phone,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Tokens.line),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Tokens.line),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide:
+                      const BorderSide(color: Tokens.indigo, width: 1.5),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(sheetContext, ''),
+                    child: const Text('Skip',
+                        style: TextStyle(color: Tokens.muted)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: GestureDetector(
+                    onTap: () =>
+                        Navigator.pop(sheetContext, controller.text),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      decoration: BoxDecoration(
+                        gradient: Tokens.ctaGradient,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text(
+                        'Start interview',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result == null) return; // dismissed entirely
+    if (result.trim().isNotEmpty) await sp.setString('last_jd', result.trim());
+    if (mounted) _startCall(scenario, scenarioContext: result.trim());
   }
 
   @override
@@ -145,6 +292,19 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         : 'Hi, ${ProfileService.current.name} 👋',
                     style: const TextStyle(
                         fontSize: 22, fontWeight: FontWeight.w800),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Daily call time',
+                  onPressed: _pickReminderTime,
+                  icon: Icon(
+                    _reminderTime == null
+                        ? Icons.notifications_none_rounded
+                        : Icons.notifications_active_rounded,
+                    color: _reminderTime == null
+                        ? Tokens.faint
+                        : Tokens.indigoSoft,
+                    size: 20,
                   ),
                 ),
                 if (Config.supabaseUrl.isNotEmpty)
@@ -260,7 +420,8 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               children: [
                 for (final s in scenarios)
                   GestureDetector(
-                    onTap: () => _startCall(s),
+                    onTap: () =>
+                        s.id == 'interview' ? _startInterview(s) : _startCall(s),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 13),
                       decoration: BoxDecoration(

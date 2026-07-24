@@ -3,13 +3,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
 import 'features/auth/auth_screen.dart';
+import 'features/call/call_screen.dart';
 import 'features/coach/coach_screen.dart';
+import 'features/coach/coaches.dart';
 import 'features/home/home_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/practice/practice_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'services/profile.dart';
+import 'services/reminders.dart';
 import 'theme/app_theme.dart';
+
+final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +24,18 @@ Future<void> main() async {
       publishableKey: Config.supabaseAnonKey,
     );
   }
+  // Answering the daily "coach is calling" notification goes straight into
+  // a call with the selected coach.
+  Reminders.onAnswer = () async {
+    if (Supabase.instance.client.auth.currentSession == null) return;
+    final coach = await CoachPrefs.selected();
+    navigatorKey.currentState?.push(
+      MaterialPageRoute<void>(
+        builder: (_) => CallScreen(coach: coach, scenario: scenarios[0]),
+      ),
+    );
+  };
+  await Reminders.init();
   runApp(const FluenixApp());
 }
 
@@ -30,6 +47,7 @@ class FluenixApp extends StatelessWidget {
     return MaterialApp(
       title: 'Fluenix',
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey,
       theme: buildFluenixTheme(),
       // Without Supabase config the app still runs in pure-dev mode
       // (direct Gemini key, no auth, no metering).

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../services/profile.dart';
+
 /// The coach roster (PLAN.md §3, mockup 05). Each coach is a personality,
 /// a voice, and a gradient that follows them through the whole app.
 class Coach {
@@ -155,6 +157,26 @@ String buildSystemPrompt(
           'these. If they slip, sometimes gently recast their sentence in '
           'your reply — never lecture.';
 
+  final p = ProfileService.current;
+  final levelHint = switch (p.level) {
+    'beginner' => 'Use short, simple sentences and everyday words. Speak a '
+        'touch slower. Celebrate small wins.',
+    'advanced' => 'Use rich, natural vocabulary and idioms. Push them with '
+        'follow-ups that demand precision.',
+    _ => 'Use natural everyday language; stretch their vocabulary gently.',
+  };
+  final goalLabel = switch (p.goal) {
+    'interview' => 'preparing for job interviews',
+    'ielts' => 'preparing for IELTS/PTE speaking',
+    'business' => 'improving business and client communication',
+    'abroad' => 'preparing to move abroad',
+    _ => 'improving everyday conversation',
+  };
+  final learner = '\n\nAbout the learner: '
+      '${p.name.isNotEmpty ? 'Their name is ${p.name} — use it naturally. ' : ''}'
+      'Their level is ${p.level}. $levelHint '
+      'Their overall goal is $goalLabel.';
+
   var continuity = '';
   if (memory.isNotEmpty) {
     final when = switch (lastCallDaysAgo) {
@@ -186,7 +208,7 @@ speaker. Rules for every call:
   yours.
 
 Open the call with a natural greeting for this scenario and an easy first
-question.$focus$continuity''';
+question.$learner$focus$continuity''';
 }
 
 /// Persisted coach selection.

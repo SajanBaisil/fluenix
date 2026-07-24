@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config.dart';
 import '../../services/api.dart';
+import '../../services/profile.dart';
 import '../../theme/app_theme.dart';
 import '../call/call_screen.dart';
 import '../coach/coaches.dart';
@@ -49,6 +50,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// Public so the shell can refresh after tab switches / calls.
   Future<void> refresh() async {
     _coach = await CoachPrefs.selected();
+    await ProfileService.load();
     if (mounted) setState(() {});
     unawaited(_loadLimits());
     unawaited(_loadFocus());
@@ -136,11 +138,13 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Good morning 👋',
-                    style:
-                        TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                    ProfileService.current.name.isEmpty
+                        ? 'Good morning 👋'
+                        : 'Hi, ${ProfileService.current.name} 👋',
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.w800),
                   ),
                 ),
                 if (Config.supabaseUrl.isNotEmpty)

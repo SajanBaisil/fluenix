@@ -5,8 +5,10 @@ import 'config.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/coach/coach_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/practice/practice_screen.dart';
 import 'features/progress/progress_screen.dart';
+import 'services/profile.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -45,9 +47,47 @@ class _AuthGate extends StatelessWidget {
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, _) {
         final signedIn = Supabase.instance.client.auth.currentSession != null;
-        return signedIn ? const HomeShell() : const AuthScreen();
+        return signedIn ? const _ProfileGate() : const AuthScreen();
       },
     );
+  }
+}
+
+/// After sign-in: first-run users get onboarding, everyone else the app.
+class _ProfileGate extends StatefulWidget {
+  const _ProfileGate();
+
+  @override
+  State<_ProfileGate> createState() => _ProfileGateState();
+}
+
+class _ProfileGateState extends State<_ProfileGate> {
+  Profile? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+    ProfileService.load().then((p) {
+      if (mounted) setState(() => _profile = p);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = _profile;
+    if (profile == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: Tokens.indigoSoft),
+        ),
+      );
+    }
+    if (!profile.onboarded) {
+      return OnboardingScreen(
+        onDone: () => setState(() => _profile = ProfileService.current),
+      );
+    }
+    return const HomeShell();
   }
 }
 

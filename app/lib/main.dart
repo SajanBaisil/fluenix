@@ -6,6 +6,7 @@ import 'features/auth/auth_screen.dart';
 import 'features/call/call_screen.dart';
 import 'features/coach/coach_screen.dart';
 import 'features/coach/coaches.dart';
+import 'features/community/community_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/practice/practice_screen.dart';
@@ -121,6 +122,7 @@ class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
   final _homeKey = GlobalKey<HomeScreenState>();
   final _practiceKey = GlobalKey<PracticeScreenState>();
+  final _communityKey = GlobalKey<CommunityScreenState>();
   final _progressKey = GlobalKey<ProgressScreenState>();
 
   @override
@@ -132,6 +134,7 @@ class _HomeShellState extends State<HomeShell> {
           HomeScreen(key: _homeKey),
           const CoachScreen(),
           PracticeScreen(key: _practiceKey),
+          CommunityScreen(key: _communityKey),
           ProgressScreen(key: _progressKey),
         ],
       ),
@@ -162,7 +165,8 @@ class _HomeShellState extends State<HomeShell> {
             // Coming back to a tab → refresh its data.
             if (i == 0) _homeKey.currentState?.refresh();
             if (i == 2) _practiceKey.currentState?.refresh();
-            if (i == 3) _progressKey.currentState?.refresh();
+            if (i == 3) _communityKey.currentState?.refresh();
+            if (i == 4) _progressKey.currentState?.refresh();
           },
           destinations: const [
             NavigationDestination(
@@ -176,6 +180,10 @@ class _HomeShellState extends State<HomeShell> {
             NavigationDestination(
               icon: Icon(Icons.fitness_center_rounded),
               label: 'Practice',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.forum_rounded),
+              label: 'Community',
             ),
             NavigationDestination(
               icon: Icon(Icons.insights_rounded),

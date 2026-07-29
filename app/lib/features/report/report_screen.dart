@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../config.dart';
 import '../../theme/app_theme.dart';
 
 /// Post-call report (mockup 03). Shown right after the call ends; polls for
@@ -245,9 +246,118 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
         ],
         const SizedBox(height: 26),
+        if (Config.supabaseUrl.isNotEmpty) ...[
+          GestureDetector(
+            onTap: () => _share(r),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                    color: Tokens.indigo.withValues(alpha: 0.55)),
+              ),
+              child: const Text(
+                'Share to community',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Tokens.indigoSoft,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         _doneButton(),
       ],
     );
+  }
+
+  /// Post this report as a mini score card into one of the user's
+  /// communities ("Wins & Reports" is the natural home).
+  Future<void> _share(Map<String, dynamic> r) async {
+    final client = Supabase.instance.client;
+    final uid = client.auth.currentUser?.id;
+    if (uid == null) return;
+    List<Map<String, dynamic>> joined;
+    try {
+      final rows = await client
+          .from('community_members')
+          .select('communities(id, name, emoji)')
+          .eq('user_id', uid);
+      joined = rows
+          .map((row) => (row['communities'] as Map).cast<String, dynamic>())
+          .toList();
+    } catch (e) {
+      debugPrint('report: share lookup failed: $e');
+      return;
+    }
+    if (!mounted) return;
+    if (joined.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Join a community first — see the Community tab')),
+      );
+      return;
+    }
+    final picked = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      backgroundColor: Tokens.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(22, 18, 22, 6),
+              child: Text(
+                'Share your report to…',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              ),
+            ),
+            for (final c in joined)
+              ListTile(
+                leading: Text(
+                  (c['emoji'] as String?) ?? '💬',
+                  style: const TextStyle(fontSize: 22),
+                ),
+                title: Text((c['name'] as String?) ?? ''),
+                onTap: () => Navigator.pop(sheet, c),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final overall = (r['overall'] as num?)?.toInt() ?? 0;
+    final scores = (r['scores'] as Map?)?.cast<String, dynamic>() ?? {};
+    final headline = (scores['headline'] as String?) ?? '';
+    try {
+      await client.from('community_messages').insert({
+        'community_id': picked['id'],
+        'user_id': uid,
+        'kind': 'report_share',
+        'body': headline.isEmpty ? 'Shared a call report' : headline,
+        'payload': {'overall': overall, 'headline': headline},
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Shared to ${picked['name']}')),
+        );
+      }
+    } catch (e) {
+      debugPrint('report: share failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Couldn't share — try again")),
+        );
+      }
+    }
   }
 
   String _labelFor(int overall) => switch (overall) {

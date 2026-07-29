@@ -1,52 +1,114 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Design tokens — 1:1 with design/mockups.html.
+/// Design tokens — 1:1 with design/README.md (cream / clay / teal editorial).
 abstract final class Tokens {
-  static const indigo = Color(0xFF6366F1);
-  static const indigoSoft = Color(0xFF818CF8);
-  static const violet = Color(0xFFA855F7);
-  static const phone = Color(0xFF0B0E1A); // app background
-  static const card = Color(0xFF131829);
-  static const cardHi = Color(0xFF1A2036);
-  static const line = Color(0x1794A3FF); // rgba(148,163,255,0.09)
-  static const ink = Color(0xFFF4F6FF);
-  static const muted = Color(0xFF8B92B4);
-  static const faint = Color(0xFF5A6184);
-  static const coral = Color(0xFFF8968A);
-  static const coralDeep = Color(0xFFF2766B);
-  static const mint = Color(0xFF34D399);
-  static const rose = Color(0xFFF87171);
-  static const amber = Color(0xFFFBBF24);
+  // Core palette
+  static const ink = Color(0xFF14110F);
+  static const cream = Color(0xFFF6F1E8);
+  static const white = Color(0xFFFFFFFF);
+  static const clay = Color(0xFFC9502B);
+  static const clayHover = Color(0xFFDD5C33);
+  static const clayTint = Color(0xFFFBEDE7);
+  static const claySoft = Color(0xFFEFD3C6);
+  static const teal = Color(0xFF0F5951);
+  static const tealTint = Color(0xFFE4EEEC);
+  static const tealInk = Color(0xFF0B2F27); // text on mint badge
+  static const mint = Color(0xFF7BC9A8);
+  static const goldText = Color(0xFFA9761A);
+  static const gold = Color(0xFFE9A227);
+  static const goldTint = Color(0xFFFAF0D8);
+
+  // Ink opacities (on light surfaces)
+  static const hairline = Color(0x1414110F); // .08 — card borders, dividers
+  static const ink72 = Color(0xB814110F);
+  static const ink60 = Color(0x9914110F); // secondary text
+  static const ink50 = Color(0x8014110F); // tertiary text
+  static const ink45 = Color(0x7314110F); // struck-through "said" text
+  static const ink35 = Color(0x5914110F); // inactive tab, placeholder
+  static const track = Color(0x1214110F); // .07 — progress-bar track
+  static const inkSoft = Color(0x0B14110F); // .045 — soft card bg
+
+  // Cream opacities (on the dark call screen / ink cards)
+  static const cream07 = Color(0x12F6F1E8);
+  static const cream08 = Color(0x14F6F1E8);
+  static const cream10 = Color(0x1AF6F1E8);
+  static const cream12 = Color(0x1FF6F1E8);
+  static const cream16 = Color(0x29F6F1E8);
+  static const cream45 = Color(0x73F6F1E8);
+
+  // ── Legacy aliases (older widgets; migrate to the names above) ──
+  static const indigo = clay;
+  static const indigoSoft = clay;
+  static const violet = teal;
+  static const phone = cream; // app background
+  static const card = white;
+  static const cardHi = track;
+  static const line = hairline;
+  static const muted = ink60;
+  static const faint = ink50;
+  static const rose = clay;
+  static const amber = goldText;
 
   static const ctaGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [indigo, Color(0xFF7C6AF2)],
+    colors: [clay, clayHover],
   );
-  static const ringGradient = LinearGradient(colors: [indigo, violet]);
+  static const ringGradient = LinearGradient(colors: [clay, clayHover]);
   static const coralGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [coral, coralDeep],
+    colors: [clay, clayHover],
   );
+}
+
+/// The three design families. Display = Newsreader (serif, weight 400,
+/// tight leading), UI = Schibsted Grotesk (theme default), labels/numeric =
+/// IBM Plex Mono (uppercase eyebrows — callers pass uppercased strings).
+abstract final class Type {
+  static TextStyle display(
+    double size, {
+    Color color = Tokens.ink,
+    double height = 1.05,
+    FontWeight weight = FontWeight.w400,
+  }) =>
+      GoogleFonts.newsreader(
+        fontSize: size,
+        height: height,
+        color: color,
+        fontWeight: weight,
+      );
+
+  static TextStyle mono(
+    double size, {
+    Color color = Tokens.ink50,
+    FontWeight weight = FontWeight.w600,
+    double ls = 1.2,
+  }) =>
+      GoogleFonts.ibmPlexMono(
+        fontSize: size,
+        color: color,
+        fontWeight: weight,
+        letterSpacing: ls,
+      );
 }
 
 ThemeData buildFluenixTheme() {
   final base = ThemeData(
-    brightness: Brightness.dark,
+    brightness: Brightness.light,
     useMaterial3: true,
-    scaffoldBackgroundColor: Tokens.phone,
-    colorScheme: const ColorScheme.dark(
-      primary: Tokens.indigo,
-      secondary: Tokens.violet,
-      surface: Tokens.card,
+    scaffoldBackgroundColor: Tokens.cream,
+    colorScheme: const ColorScheme.light(
+      primary: Tokens.clay,
+      secondary: Tokens.teal,
+      surface: Tokens.white,
       onSurface: Tokens.ink,
-      error: Tokens.rose,
+      error: Tokens.clay,
     ),
   );
 
-  final text = GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
+  final text = GoogleFonts.schibstedGroteskTextTheme(base.textTheme).apply(
     bodyColor: Tokens.ink,
     displayColor: Tokens.ink,
   );
@@ -54,14 +116,42 @@ ThemeData buildFluenixTheme() {
   return base.copyWith(
     textTheme: text,
     splashFactory: InkSparkle.splashFactory,
-    dividerColor: Tokens.line,
+    dividerColor: Tokens.hairline,
     cardTheme: const CardThemeData(
-      color: Tokens.card,
+      color: Tokens.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(20)),
-        side: BorderSide(color: Tokens.line),
+        borderRadius: BorderRadius.all(Radius.circular(22)),
+        side: BorderSide(color: Tokens.hairline),
       ),
     ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      foregroundColor: Tokens.ink,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Tokens.white,
+      surfaceTintColor: Colors.transparent,
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: Tokens.ink,
+      contentTextStyle: GoogleFonts.schibstedGrotesk(
+        color: Tokens.cream,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+      behavior: SnackBarBehavior.floating,
+    ),
+    dialogTheme: const DialogThemeData(
+      backgroundColor: Tokens.white,
+      surfaceTintColor: Colors.transparent,
+    ),
+    timePickerTheme: const TimePickerThemeData(
+      backgroundColor: Tokens.white,
+    ),
+    progressIndicatorTheme:
+        const ProgressIndicatorThemeData(color: Tokens.clay),
   );
 }

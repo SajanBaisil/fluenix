@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -14,12 +15,18 @@ import '../../voice/voice_session.dart';
 
 enum CallState { connecting, listening, speaking, ended, error }
 
+/// Active call (design/README.md §04): full-bleed ink, clay glow, waveform,
+/// caption bubbles. All session logic (metering, transcript, barge-in,
+/// routing) predates the redesign and is unchanged.
 class CallScreen extends StatefulWidget {
   const CallScreen({
     super.key,
     required this.coach,
     required this.scenario,
     this.scenarioContext = '',
+    this.levelOverride = '',
+    this.targetMinutes,
+    this.initialCc = true,
   });
 
   final Coach coach;
@@ -27,6 +34,11 @@ class CallScreen extends StatefulWidget {
 
   /// Extra session context, e.g. a pasted job description for interviews.
   final String scenarioContext;
+
+  /// Call-setup overrides (design §03): CEFR level and planned length.
+  final String levelOverride;
+  final int? targetMinutes;
+  final bool initialCc;
 
   @override
   State<CallScreen> createState() => _CallScreenState();
@@ -45,7 +57,7 @@ class _CallScreenState extends State<CallScreen> {
   String _userBuffer = '';
   String _errorMessage = '';
   bool _muted = false;
-  bool _ccOn = true;
+  late bool _ccOn = widget.initialCc;
   int _seconds = 0;
   Timer? _ticker;
 
@@ -127,6 +139,8 @@ class _CallScreenState extends State<CallScreen> {
         memory: _grant?.memory ?? '',
         lastCallDaysAgo: _grant?.lastCallDaysAgo,
         scenarioContext: widget.scenarioContext,
+        levelOverride: widget.levelOverride,
+        targetMinutes: widget.targetMinutes,
       ),
       voiceName: widget.coach.voice,
     );
@@ -178,8 +192,7 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  Future<void> _toggleSpeaker() =>
-      _route.setSpeakerphone(!_route.speakerOn);
+  Future<void> _toggleSpeaker() => _route.setSpeakerphone(!_route.speakerOn);
 
   void _onEvent(VoiceEvent event) {
     if (!mounted) return;
@@ -284,69 +297,133 @@ class _CallScreenState extends State<CallScreen> {
     return '$m:$s';
   }
 
-  String get _statusLabel => switch (_state) {
-        CallState.connecting => 'CONNECTING',
-        CallState.listening => 'LISTENING',
-        CallState.speaking => 'SPEAKING',
-        CallState.ended => 'CALL ENDED',
-        CallState.error => 'ERROR',
-      };
-
   @override
   Widget build(BuildContext context) {
+    final c = widget.coach;
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -0.4),
-            radius: 1.1,
-            colors: [Color(0x296366F1), Colors.transparent],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const Spacer(),
-              Text(
-                _timer,
-                style: const TextStyle(
-                  color: Tokens.muted,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  fontFeatures: [FontFeature.tabularFigures()],
-                ),
-              ),
-              const SizedBox(height: 26),
-              _CoachHalo(
-                active: _state == CallState.speaking,
-                coach: widget.coach,
-              ),
-              const SizedBox(height: 26),
-              Text(
-                widget.coach.name,
-                style: const TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: Tokens.ink,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Top bar ─────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
                 children: [
-                  _Waveform(active: _state == CallState.speaking),
-                  const SizedBox(width: 8),
-                  Text(
-                    _statusLabel,
-                    style: const TextStyle(
-                      color: Tokens.indigoSoft,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.5,
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Tokens.cream12,
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Text(c.name[0],
+                        style: Type.display(20, color: Tokens.cream)),
+                  ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          c.name,
+                          style: const TextStyle(
+                            color: Tokens.cream,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${widget.scenario.title} · live',
+                          style: const TextStyle(
+                              color: Tokens.cream45, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Tokens.cream08,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      children: [
+                        const _BlinkDot(color: Tokens.clayHover),
+                        const SizedBox(width: 6),
+                        Text(_timer,
+                            style: Type.mono(12,
+                                color: Tokens.cream, ls: 0.5)),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 26),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
+            ),
+            const Spacer(),
+            // ── Voice visual: clay glow + waveform ──────────
+            SizedBox(
+              height: 150,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 300,
+                    height: 150,
+                    decoration: const BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [Color(0x57C9502B), Colors.transparent],
+                        stops: [0, 0.66],
+                      ),
+                    ),
+                  ),
+                  _Waveform(active: _state == CallState.speaking),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
+            // ── Status pill ─────────────────────────────────
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: Tokens.cream07,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: Tokens.cream10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                        color: Tokens.mint, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    switch (_state) {
+                      CallState.connecting => 'CONNECTING…',
+                      CallState.speaking =>
+                        '${c.name.toUpperCase()} IS SPEAKING',
+                      CallState.listening => 'YOUR TURN — KEEP GOING',
+                      CallState.ended => 'CALL ENDED',
+                      CallState.error => 'SOMETHING WENT WRONG',
+                    },
+                    style: Type.mono(10, color: Tokens.cream45, ls: 1.4),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            // ── Captions / error ────────────────────────────
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 230),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _state == CallState.error
                     ? Text(
                         _errorMessage,
@@ -354,139 +431,181 @@ class _CallScreenState extends State<CallScreen> {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Tokens.rose,
-                          fontSize: 14,
+                          color: Color(0xFFF2B8A5),
+                          fontSize: 13.5,
                           height: 1.6,
                         ),
                       )
                     : !_ccOn
                         ? const SizedBox.shrink()
-                        : Column(
-                            children: [
-                              if (_caption.isNotEmpty)
-                                Text(
-                                  _caption,
-                                  textAlign: TextAlign.center,
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Tokens.muted,
-                                    fontSize: 14,
-                                    height: 1.6,
-                                  ),
-                                ),
-                              if (_userCaption.isNotEmpty) ...[
-                                const SizedBox(height: 10),
-                                Text(
-                                  'You: $_userCaption',
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Tokens.indigoSoft,
-                                    fontSize: 13,
-                                    height: 1.55,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
+                        : SingleChildScrollView(
+                            reverse: true,
+                            child: Column(
+                              children: [
+                                if (_caption.isNotEmpty)
+                                  _bubble(_caption, coach: true, name: c.name),
+                                if (_userCaption.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  _bubble(_userCaption,
+                                      coach: false, name: 'You'),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
               ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            ),
+            const Spacer(),
+            // ── Controls ────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
+              child: Row(
                 children: [
-                  _CtlButton(
+                  _ctl(
                     icon: _muted ? Icons.mic_off_rounded : Icons.mic_rounded,
-                    active: _muted,
+                    filled: _muted,
                     onTap: () {
                       setState(() => _muted = !_muted);
                       _session?.setMuted(_muted);
                     },
                   ),
-                  const SizedBox(width: 16),
-                  // Shows where the audio actually is: earpiece, speaker,
-                  // Bluetooth, or wired — updates live as devices connect.
+                  const SizedBox(width: 10),
                   ValueListenableBuilder<CallAudioRoute>(
                     valueListenable: _route.route,
-                    builder: (context, r, _) => _CtlButton(
+                    builder: (context, r, _) => _ctl(
                       icon: switch (r) {
                         CallAudioRoute.speaker => Icons.volume_up_rounded,
                         CallAudioRoute.bluetooth =>
                           Icons.bluetooth_audio_rounded,
                         CallAudioRoute.wired => Icons.headset_rounded,
-                        CallAudioRoute.earpiece =>
-                          Icons.phone_in_talk_rounded,
+                        CallAudioRoute.earpiece => Icons.phone_in_talk_rounded,
                       },
-                      // Highlighted whenever audio is anywhere but the
-                      // default earpiece.
                       active: r != CallAudioRoute.earpiece,
                       onTap: _toggleSpeaker,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  _CtlButton(
+                  const SizedBox(width: 10),
+                  _ctl(
                     icon: Icons.closed_caption_rounded,
                     active: _ccOn,
                     onTap: () => setState(() => _ccOn = !_ccOn),
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(34, 0, 34, 34),
-                child: GestureDetector(
-                  onTap: _endCall,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    decoration: BoxDecoration(
-                      gradient: Tokens.coralGradient,
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Tokens.coralDeep.withValues(alpha: 0.3),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _endCall,
+                      child: Container(
+                        height: 56,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Tokens.clay,
+                          borderRadius: BorderRadius.circular(999),
                         ),
-                      ],
-                    ),
-                    child: const Text(
-                      'End call',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        child: const Text(
+                          'End call',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _bubble(String text, {required bool coach, required String name}) {
+    return Align(
+      alignment: coach ? Alignment.centerLeft : Alignment.centerRight,
+      child: Container(
+        constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.86),
+        padding: const EdgeInsets.fromLTRB(13, 9, 13, 10),
+        decoration: BoxDecoration(
+          color: coach ? Tokens.cream08 : const Color(0x29C9502B),
+          border: Border.all(
+              color: coach ? Tokens.cream12 : const Color(0x4DC9502B)),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(coach ? 6 : 18),
+            bottomRight: Radius.circular(coach ? 18 : 6),
           ),
         ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name.toUpperCase(),
+              style: Type.mono(
+                9,
+                color: coach ? Tokens.cream45 : const Color(0xD9F0C98C),
+                ls: 1.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              text,
+              style: const TextStyle(
+                color: Tokens.cream,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w500,
+                height: 1.45,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _ctl({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool active = false,
+    bool filled = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: filled
+              ? Tokens.cream
+              : active
+                  ? Tokens.cream16
+                  : Tokens.cream07,
+          shape: BoxShape.circle,
+          border: Border.all(color: Tokens.cream12),
+        ),
+        child: Icon(icon,
+            color: filled ? Tokens.ink : Tokens.cream, size: 22),
       ),
     );
   }
 }
 
-/// Breathing halo around the coach avatar (mockup 02).
-class _CoachHalo extends StatefulWidget {
-  const _CoachHalo({required this.active, required this.coach});
-  final bool active;
-  final Coach coach;
+/// 6px dot blinking at 1.4s — the "live" marker in the timer pill.
+class _BlinkDot extends StatefulWidget {
+  const _BlinkDot({required this.color});
+  final Color color;
 
   @override
-  State<_CoachHalo> createState() => _CoachHaloState();
+  State<_BlinkDot> createState() => _BlinkDotState();
 }
 
-class _CoachHaloState extends State<_CoachHalo>
+class _BlinkDotState extends State<_BlinkDot>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 3200),
+    duration: const Duration(milliseconds: 700),
   )..repeat(reverse: true);
 
   @override
@@ -497,67 +616,21 @@ class _CoachHaloState extends State<_CoachHalo>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 210,
-      height: 210,
-      child: AnimatedBuilder(
-        animation: _c,
-        builder: (context, child) {
-          final t = Curves.easeInOut.transform(_c.value);
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              Transform.scale(
-                scale: 1 + 0.06 * t,
-                child: Container(
-                  width: 210,
-                  height: 210,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Tokens.indigoSoft.withValues(
-                        alpha: 0.35 - 0.2 * t,
-                      ),
-                      width: 1.5,
-                    ),
-                  ),
-                ),
-              ),
-              child!,
-            ],
-          );
-        },
-        child: Container(
-          width: 140,
-          height: 140,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: widget.coach.gradient,
-            boxShadow: [
-              BoxShadow(
-                color: widget.coach.colors.first.withValues(
-                  alpha: widget.active ? 0.55 : 0.35,
-                ),
-                blurRadius: 70,
-              ),
-            ],
-          ),
-          child: Text(
-            widget.coach.name[0],
-            style: const TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-        ),
+    return FadeTransition(
+      opacity: Tween(begin: 1.0, end: 0.25)
+          .animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut)),
+      child: Container(
+        width: 6,
+        height: 6,
+        decoration:
+            BoxDecoration(color: widget.color, shape: BoxShape.circle),
       ),
     );
   }
 }
 
-/// Five animated bars, active while the coach is speaking.
+/// 18 clay bars (design §04 waveform variant): staggered scaleY animation
+/// while the coach speaks, near-flat shimmer otherwise.
 class _Waveform extends StatefulWidget {
   const _Waveform({required this.active});
   final bool active;
@@ -573,6 +646,19 @@ class _WaveformState extends State<_Waveform>
     duration: const Duration(milliseconds: 1100),
   )..repeat();
 
+  static const _colors = [
+    Color(0xFFC9502B),
+    Color(0xFFD9633A),
+    Color(0xFFE8A06F),
+    Color(0xFFF0C9A8),
+  ];
+
+  // Height profile roughly matching the prototype's 34–132px silhouette.
+  static const _profile = [
+    .30, .45, .62, .80, .95, .78, .60, .88, 1.0, .92,
+    .70, .84, .58, .74, .90, .64, .46, .32,
+  ];
+
   @override
   void dispose() {
     _c.dispose();
@@ -582,54 +668,38 @@ class _WaveformState extends State<_Waveform>
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 18,
+      height: 132,
       child: AnimatedBuilder(
         animation: _c,
         builder: (context, _) {
           return Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: List.generate(5, (i) {
-              final phase = (_c.value + i * 0.15) % 1.0;
-              final h = widget.active
-                  ? 5 + 13 * (0.5 - (phase - 0.5).abs()) * 2
-                  : 5.0;
-              return Container(
-                width: 3.5,
-                height: h,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                decoration: BoxDecoration(
-                  color: Tokens.indigoSoft,
-                  borderRadius: BorderRadius.circular(3),
+            children: [
+              for (var i = 0; i < _profile.length; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                  child: _bar(i),
                 ),
-              );
-            }),
+            ],
           );
         },
       ),
     );
   }
-}
 
-class _CtlButton extends StatelessWidget {
-  const _CtlButton({required this.icon, required this.onTap, this.active = false});
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 58,
-        height: 58,
-        decoration: BoxDecoration(
-          color: active ? Tokens.indigo : Tokens.cardHi,
-          shape: BoxShape.circle,
-          border: Border.all(color: Tokens.line),
-        ),
-        child: Icon(icon, color: Tokens.ink, size: 22),
+  Widget _bar(int i) {
+    final max = 34 + 98 * _profile[i];
+    final phase = (_c.value + i * 0.08) % 1.0;
+    // scaleY .18 → 1 → .18, eased.
+    final t = math.sin(phase * math.pi);
+    final scale = widget.active ? 0.18 + 0.82 * t : 0.14 + 0.06 * t;
+    return Container(
+      width: 5,
+      height: max * scale,
+      decoration: BoxDecoration(
+        color: _colors[i % _colors.length],
+        borderRadius: BorderRadius.circular(9),
       ),
     );
   }

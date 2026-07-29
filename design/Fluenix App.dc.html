@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"><style>
+body{margin:0;background:#EFE9DE;font-family:'Schibsted Grotesk',system-ui,sans-serif}
+a{color:#C9502B;text-decoration:none}a:hover{color:#a53f20}
+*{-webkit-font-smoothing:antialiased}
+@keyframes wf{0%,100%{transform:scaleY(.18)}50%{transform:scaleY(1)}}
+@keyframes orbp{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.22);opacity:.12}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes lineIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+::-webkit-scrollbar{width:0;height:0}
+</style></helmet>
+<div style="min-height:100vh;display:flex;gap:56px;align-items:flex-start;padding:56px 60px 80px;box-sizing:border-box">
+
+  <div style="width:268px;position:sticky;top:56px;display:flex;flex-direction:column;gap:26px">
+    <div>
+      <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:rgba(20,17,15,.42)">Prototype</div>
+      <div style="font:400 44px/1 'Newsreader',Georgia,serif;color:#14110F;margin-top:12px">Fluenix</div>
+      <div style="font:500 13px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.55);margin-top:8px;max-width:230px">AI calling practice for spoken English. Tap through the flow, or jump to any screen.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid rgba(20,17,15,.12);padding-top:14px">
+      <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="8">
+        <div onClick="{{ it.go }}" style="display:flex;align-items:baseline;gap:12px;padding:9px 12px;border-radius:11px;cursor:pointer;background:{{ it.bg }}" style-hover="background:rgba(20,17,15,.06)">
+          <span style="font:500 10px/1 'IBM Plex Mono',monospace;color:{{ it.num }}">{{ it.n }}</span>
+          <span style="font:600 14px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:{{ it.fg }}">{{ it.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font:500 11px/1.6 'IBM Plex Mono',monospace;color:rgba(20,17,15,.38);border-top:1px solid rgba(20,17,15,.12);padding-top:14px">Live states: call timer, speaking turns,<br>captions, mute, end-of-call report.</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px;align-items:center">
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ isDark }}" hint-size="402px,874px">
+
+      <sc-if value="{{ atHome }}" hint-placeholder-val="{{ true }}">
+      <div style="height:874px;display:flex;flex-direction:column;background:#F6F1E8">
+        <div style="flex:1;overflow:auto;padding:60px 20px 24px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42)">Tuesday · Evening</div>
+              <div style="font:400 30px/1.1 'Newsreader',Georgia,serif;color:#14110F;margin-top:7px">Hello, Ananya</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <sc-if value="{{ gamified }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:5px;background:#FBEDE7;border:1px solid rgba(201,80,43,.18);padding:7px 11px;border-radius:999px">
+                  <span style="width:6px;height:6px;border-radius:99px;background:#C9502B;display:block"></span>
+                  <span style="font:700 12px/1 'IBM Plex Mono',monospace;color:#C9502B">12</span>
+                </div>
+              </sc-if>
+              <div style="width:38px;height:38px;border-radius:999px;background:#14110F;color:#F6F1E8;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Schibsted Grotesk',system-ui,sans-serif">A</div>
+            </div>
+          </div>
+
+          <div style="margin-top:22px;background:#14110F;border-radius:26px;padding:22px;color:#F6F1E8;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:999px;background:rgba(201,80,43,.35);filter:blur(30px)"></div>
+            <div style="position:relative">
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(246,241,232,.5)">Next up</div>
+              <div style="font:400 26px/1.15 'Newsreader',Georgia,serif;margin-top:9px;max-width:200px">IELTS Part 1 with Meera</div>
+              <div style="font:500 12px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(246,241,232,.6);margin-top:8px">10 min · Hometown &amp; studies · B2</div>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:20px">
+                <div onClick="{{ goSetup }}" style="flex:1;background:#C9502B;color:#fff;border-radius:999px;padding:15px 20px;font:700 15px/1 'Schibsted Grotesk',system-ui,sans-serif;text-align:center;cursor:pointer" style-hover="background:#dd5c33">Start call</div>
+                <div onClick="{{ goCoaches }}" style="width:52px;height:52px;border-radius:999px;border:1px solid rgba(246,241,232,.22);display:flex;align-items:center;justify-content:center;cursor:pointer;font:500 11px/1 'IBM Plex Mono',monospace;color:rgba(246,241,232,.75)" style-hover="border-color:rgba(246,241,232,.5)">All</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:26px">
+            <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">This week</div>
+            <div onClick="{{ goProgress }}" style="font:600 11px/1 'IBM Plex Mono',monospace;color:#C9502B;cursor:pointer">DETAILS</div>
+          </div>
+          <div style="margin-top:12px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:22px;padding:18px;display:flex;gap:18px">
+            <div style="flex:1">
+              <div style="font:400 34px/1 'Newsreader',Georgia,serif;color:#14110F">64<span style="font:600 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.45)"> / 90 min</span></div>
+              <div style="height:7px;border-radius:99px;background:rgba(20,17,15,.08);margin-top:12px;overflow:hidden"><div style="width:71%;height:100%;background:#C9502B;border-radius:99px"></div></div>
+              <div style="font:500 11px/1 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:9px">3 calls to hit your weekly goal</div>
+            </div>
+            <div style="width:1px;background:rgba(20,17,15,.08)"></div>
+            <div style="width:78px;text-align:center;display:flex;flex-direction:column;justify-content:center">
+              <div style="font:400 30px/1 'Newsreader',Georgia,serif;color:#0F5951">B2</div>
+              <div style="font:600 9px/1.3 'IBM Plex Mono',monospace;letter-spacing:.1em;color:rgba(20,17,15,.45);margin-top:6px">CEFR LEVEL</div>
+            </div>
+          </div>
+
+          <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:26px">Pick a goal</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:12px">
+            <div onClick="{{ goCoaches }}" style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+              <div style="width:34px;height:34px;border-radius:11px;background:#E4EEEC;display:flex;align-items:center;justify-content:center;font:700 13px/1 'IBM Plex Mono',monospace;color:#0F5951">7+</div>
+              <div style="font:700 14px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:12px">IELTS &amp; exams</div>
+              <div style="font:500 11px/1.3 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:4px">Mock speaking tests</div>
+            </div>
+            <div onClick="{{ goCoaches }}" style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+              <div style="width:34px;height:34px;border-radius:11px;background:#FBEDE7;display:flex;align-items:center;justify-content:center;font:700 13px/1 'IBM Plex Mono',monospace;color:#C9502B">HR</div>
+              <div style="font:700 14px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:12px">Interview prep</div>
+              <div style="font:500 11px/1.3 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:4px">HR &amp; tech rounds</div>
+            </div>
+            <div onClick="{{ goPractice }}" style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+              <div style="width:34px;height:34px;border-radius:11px;background:#FAF0D8;display:flex;align-items:center;justify-content:center;font:700 13px/1 'IBM Plex Mono',monospace;color:#A9761A">5m</div>
+              <div style="font:700 14px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:12px">Daily warmup</div>
+              <div style="font:500 11px/1.3 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:4px">Shadow &amp; repeat</div>
+            </div>
+            <div onClick="{{ goCommunity }}" style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+              <div style="width:34px;height:34px;border-radius:11px;background:rgba(20,17,15,.07);display:flex;align-items:center;justify-content:center;font:700 13px/1 'IBM Plex Mono',monospace;color:#14110F">2</div>
+              <div style="font:700 14px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:12px">Live rooms</div>
+              <div style="font:500 11px/1.3 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:4px">Debate Club is on</div>
+            </div>
+          </div>
+
+          <div onClick="{{ goReport }}" style="margin-top:14px;display:flex;align-items:center;gap:14px;background:rgba(20,17,15,.045);border-radius:18px;padding:14px 16px;cursor:pointer" style-hover="background:rgba(20,17,15,.08)">
+            <div style="font:400 26px/1 'Newsreader',Georgia,serif;color:#14110F">78</div>
+            <div style="flex:1">
+              <div style="font:700 12px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">Yesterday's report is ready</div>
+              <div style="font:500 11px/1.3 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:2px">3 grammar fixes · pace a little slow</div>
+            </div>
+            <div style="font:600 11px/1 'IBM Plex Mono',monospace;color:#C9502B">OPEN</div>
+          </div>
+        </div>
+        <div style="height:84px;border-top:1px solid rgba(20,17,15,.08);background:rgba(246,241,232,.92);backdrop-filter:blur(12px);display:flex;align-items:flex-start;padding:10px 8px 0">
+          <div onClick="{{ goHome }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcHome }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">◆</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Home</div></div>
+          <div onClick="{{ goCoaches }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCoach }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">☏</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Coaches</div></div>
+          <div onClick="{{ goPractice }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcPractice }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▲</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Practice</div></div>
+          <div onClick="{{ goCommunity }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCommunity }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">❍</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Community</div></div>
+          <div onClick="{{ goProgress }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcProgress }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▮</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Progress</div></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ atCoaches }}" hint-placeholder-val="{{ false }}">
+      <div style="height:874px;display:flex;flex-direction:column;background:#F6F1E8">
+        <div style="flex:1;overflow:auto;padding:60px 20px 24px">
+          <div style="font:400 30px/1.1 'Newsreader',Georgia,serif;color:#14110F">Coaches</div>
+          <div style="font:500 13px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.55);margin-top:6px">Each coach is tuned to one goal. They stay in role for the whole call.</div>
+          <div style="margin-top:16px;display:flex;align-items:center;gap:9px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:14px;padding:12px 14px">
+            <span style="font:500 13px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.35)">⌕</span>
+            <span style="font:500 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.35)">Search "salary negotiation"</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;overflow:auto;padding-bottom:2px">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+              <div onClick="{{ f.pick }}" style="flex:none;padding:9px 14px;border-radius:999px;cursor:pointer;font:600 12px/1 'Schibsted Grotesk',system-ui,sans-serif;background:{{ f.bg }};color:{{ f.fg }};border:1px solid {{ f.bd }}">{{ f.label }}</div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:11px;margin-top:16px">
+            <sc-for list="{{ coachList }}" as="c" hint-placeholder-count="4">
+              <div onClick="{{ c.open }}" style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:22px;padding:16px;cursor:pointer;display:flex;gap:14px" style-hover="border-color:rgba(20,17,15,.28)">
+                <div style="width:52px;height:52px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;font:400 24px/1 'Newsreader',Georgia,serif;background:{{ c.tint }};color:{{ c.color }}">{{ c.mono }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+                    <div style="font:700 15px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">{{ c.name }}</div>
+                    <div style="font:500 11px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.45)">★ {{ c.rating }}</div>
+                  </div>
+                  <div style="font:600 12px/1.3 'Schibsted Grotesk',system-ui,sans-serif;color:{{ c.color }};margin-top:3px">{{ c.role }}</div>
+                  <div style="font:500 11.5px/1.45 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:6px">{{ c.bio }}</div>
+                  <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+                    <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:6px 9px;border-radius:8px;background:rgba(20,17,15,.05);color:rgba(20,17,15,.6)">{{ c.accent }}</div>
+                    <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:6px 9px;border-radius:8px;background:rgba(20,17,15,.05);color:rgba(20,17,15,.6)">{{ c.focus }}</div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="height:84px;border-top:1px solid rgba(20,17,15,.08);background:rgba(246,241,232,.92);display:flex;align-items:flex-start;padding:10px 8px 0">
+          <div onClick="{{ goHome }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcHome }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">◆</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Home</div></div>
+          <div onClick="{{ goCoaches }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCoach }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">☏</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Coaches</div></div>
+          <div onClick="{{ goPractice }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcPractice }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▲</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Practice</div></div>
+          <div onClick="{{ goCommunity }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCommunity }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">❍</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Community</div></div>
+          <div onClick="{{ goProgress }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcProgress }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▮</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Progress</div></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ atSetup }}" hint-placeholder-val="{{ false }}">
+      <div style="height:874px;display:flex;flex-direction:column;background:#F6F1E8">
+        <div style="flex:1;overflow:auto;padding:60px 20px 20px">
+          <div onClick="{{ goCoaches }}" style="font:600 11px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.5);cursor:pointer">← COACHES</div>
+          <div style="margin-top:20px;display:flex;flex-direction:column;align-items:center;text-align:center">
+            <div style="width:96px;height:96px;border-radius:30px;display:flex;align-items:center;justify-content:center;font:400 42px/1 'Newsreader',Georgia,serif;background:{{ coachTint }};color:{{ coachColor }}">{{ coachMono }}</div>
+            <div style="font:400 28px/1.1 'Newsreader',Georgia,serif;color:#14110F;margin-top:16px">{{ coachName }}</div>
+            <div style="font:600 12.5px/1 'Schibsted Grotesk',system-ui,sans-serif;color:{{ coachColor }};margin-top:7px">{{ coachRole }}</div>
+            <div style="font:500 12.5px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.55);margin-top:10px;max-width:270px">{{ coachBio }}</div>
+          </div>
+
+          <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42);margin-top:26px">Today's topic</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:11px">
+            <sc-for list="{{ topics }}" as="t" hint-placeholder-count="4">
+              <div onClick="{{ t.pick }}" style="padding:11px 14px;border-radius:12px;cursor:pointer;font:600 12.5px/1 'Schibsted Grotesk',system-ui,sans-serif;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.bd }}">{{ t.label }}</div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;gap:11px;margin-top:20px">
+            <div style="flex:1">
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42)">Level</div>
+              <div style="display:flex;gap:5px;margin-top:11px;background:rgba(20,17,15,.055);padding:4px;border-radius:12px">
+                <sc-for list="{{ levels }}" as="l" hint-placeholder-count="3">
+                  <div onClick="{{ l.pick }}" style="flex:1;text-align:center;padding:9px 0;border-radius:9px;cursor:pointer;font:700 12px/1 'IBM Plex Mono',monospace;background:{{ l.bg }};color:{{ l.fg }}">{{ l.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="flex:1">
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42)">Length</div>
+              <div style="display:flex;gap:5px;margin-top:11px;background:rgba(20,17,15,.055);padding:4px;border-radius:12px">
+                <sc-for list="{{ durations }}" as="d" hint-placeholder-count="3">
+                  <div onClick="{{ d.pick }}" style="flex:1;text-align:center;padding:9px 0;border-radius:9px;cursor:pointer;font:700 12px/1 'IBM Plex Mono',monospace;background:{{ d.bg }};color:{{ d.fg }}">{{ d.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:18px;padding:15px 16px;display:flex;align-items:center;gap:12px">
+            <div style="flex:1">
+              <div style="font:700 13px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">Live captions</div>
+              <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:3px">See the transcript and corrections as you speak</div>
+            </div>
+            <div onClick="{{ toggleCaptions }}" style="width:48px;height:28px;border-radius:99px;padding:3px;cursor:pointer;background:{{ capBg }};display:flex;justify-content:{{ capJustify }}"><div style="width:22px;height:22px;border-radius:99px;background:#fff"></div></div>
+          </div>
+
+          <div onClick="{{ startCall }}" style="margin-top:20px;background:#C9502B;color:#fff;border-radius:999px;padding:18px;text-align:center;font:700 16px/1 'Schibsted Grotesk',system-ui,sans-serif;cursor:pointer" style-hover="background:#dd5c33">Call {{ coachFirst }} now</div>
+          <div style="text-align:center;font:500 11px/1.5 'IBM Plex Mono',monospace;color:rgba(20,17,15,.42);margin-top:12px">Uses {{ durMins }} of your 60 free minutes this month</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ atCall }}" hint-placeholder-val="{{ false }}">
+      <div style="height:874px;display:flex;flex-direction:column;background:#14110F;color:#F6F1E8;position:relative;overflow:hidden">
+        <div style="position:absolute;left:50%;top:180px;transform:translateX(-50%);width:420px;height:420px;border-radius:999px;background:radial-gradient(circle,rgba(201,80,43,.34),rgba(201,80,43,0) 66%);filter:blur(10px)"></div>
+        <div style="position:relative;padding:62px 20px 0;display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font:400 19px/1 'Newsreader',Georgia,serif;background:{{ coachTint }};color:{{ coachColor }}">{{ coachMono }}</div>
+          <div style="flex:1">
+            <div style="font:700 14px/1.2 'Schibsted Grotesk',system-ui,sans-serif">{{ coachName }}</div>
+            <div style="font:500 11px/1.3 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(246,241,232,.5);margin-top:2px">{{ callSubtitle }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;background:rgba(246,241,232,.08);padding:8px 12px;border-radius:999px">
+            <span style="width:6px;height:6px;border-radius:99px;background:#C9502B;display:block;animation:blink 1.4s ease-in-out infinite"></span>
+            <span style="font:600 12px/1 'IBM Plex Mono',monospace">{{ timer }}</span>
+          </div>
+        </div>
+
+        <div style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px">
+          <sc-if value="{{ isOrb }}" hint-placeholder-val="{{ false }}">
+            <div style="position:relative;width:190px;height:190px;display:flex;align-items:center;justify-content:center">
+              <div style="position:absolute;inset:0;border-radius:999px;border:1px solid rgba(201,80,43,.5);animation:orbp 2.6s ease-in-out infinite"></div>
+              <div style="position:absolute;inset:26px;border-radius:999px;border:1px solid rgba(201,80,43,.45);animation:orbp 2.6s ease-in-out .5s infinite"></div>
+              <div style="width:104px;height:104px;border-radius:999px;background:linear-gradient(150deg,#E06B3F,#B03F1F)"></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isWave }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:5px;height:132px">
+              <div style="width:5px;height:34px;border-radius:9px;background:#C9502B;animation:wf 1.1s ease-in-out 0s infinite"></div>
+              <div style="width:5px;height:58px;border-radius:9px;background:#C9502B;animation:wf 1.1s ease-in-out .08s infinite"></div>
+              <div style="width:5px;height:96px;border-radius:9px;background:#D9633A;animation:wf 1.1s ease-in-out .16s infinite"></div>
+              <div style="width:5px;height:44px;border-radius:9px;background:#C9502B;animation:wf 1.1s ease-in-out .24s infinite"></div>
+              <div style="width:5px;height:120px;border-radius:9px;background:#E8A06F;animation:wf 1.1s ease-in-out .32s infinite"></div>
+              <div style="width:5px;height:70px;border-radius:9px;background:#D9633A;animation:wf 1.1s ease-in-out .4s infinite"></div>
+              <div style="width:5px;height:132px;border-radius:9px;background:#F0C9A8;animation:wf 1.1s ease-in-out .48s infinite"></div>
+              <div style="width:5px;height:52px;border-radius:9px;background:#C9502B;animation:wf 1.1s ease-in-out .56s infinite"></div>
+              <div style="width:5px;height:104px;border-radius:9px;background:#E8A06F;animation:wf 1.1s ease-in-out .64s infinite"></div>
+              <div style="width:5px;height:66px;border-radius:9px;background:#D9633A;animation:wf 1.1s ease-in-out .72s infinite"></div>
+              <div style="width:5px;height:124px;border-radius:9px;background:#F0C9A8;animation:wf 1.1s ease-in-out .8s infinite"></div>
+              <div style="width:5px;height:40px;border-radius:9px;background:#C9502B;animation:wf 1.1s ease-in-out .88s infinite"></div>
+              <div style="width:5px;height:88px;border-radius:9px;background:#D9633A;animation:wf 1.1s ease-in-out .96s infinite"></div>
+              <div style="width:5px;height:60px;border-radius:9px;background:#C9502B;animation:wf 1.1s ease-in-out 1.04s infinite"></div>
+              <div style="width:5px;height:110px;border-radius:9px;background:#E8A06F;animation:wf 1.1s ease-in-out 1.12s infinite"></div>
+              <div style="width:5px;height:36px;border-radius:9px;background:#C9502B;animation:wf 1.1s ease-in-out 1.2s infinite"></div>
+              <div style="width:5px;height:76px;border-radius:9px;background:#D9633A;animation:wf 1.1s ease-in-out 1.28s infinite"></div>
+              <div style="width:5px;height:48px;border-radius:9px;background:#C9502B;animation:wf 1.1s ease-in-out 1.36s infinite"></div>
+            </div>
+          </sc-if>
+          <div style="display:flex;align-items:center;gap:9px;background:rgba(246,241,232,.07);border:1px solid rgba(246,241,232,.1);padding:9px 15px;border-radius:999px">
+            <span style="width:6px;height:6px;border-radius:99px;background:#7BC9A8;display:block"></span>
+            <span style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:rgba(246,241,232,.8)">{{ speakerLabel }}</span>
+          </div>
+        </div>
+
+        <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative;padding:0 16px;max-height:290px;overflow:auto">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ lines }}" as="l" hint-placeholder-count="3">
+              <div style="animation:lineIn .45s ease both;align-self:{{ l.align }};max-width:86%;background:{{ l.bg }};border:1px solid {{ l.bd }};border-radius:{{ l.radius }};padding:12px 14px">
+                <div style="font:600 9px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:{{ l.who }};margin-bottom:6px">{{ l.name }}</div>
+                <div style="font:500 13.5px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:{{ l.fg }};text-wrap:pretty">{{ l.text }}</div>
+                <sc-if value="{{ l.hasFix }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:9px;display:flex;gap:8px;align-items:flex-start;border-top:1px dashed rgba(233,162,39,.4);padding-top:9px">
+                    <span style="font:700 9px/1.5 'IBM Plex Mono',monospace;color:#E9A227">FIX</span>
+                    <span style="font:600 12px/1.45 'Schibsted Grotesk',system-ui,sans-serif;color:#F0D08C">{{ l.fix }}</span>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <div style="position:relative;padding:18px 20px 44px;display:flex;align-items:center;justify-content:center;gap:14px">
+          <div onClick="{{ toggleMute }}" style="width:56px;height:56px;border-radius:999px;border:1px solid rgba(246,241,232,.16);background:{{ muteBg }};display:flex;align-items:center;justify-content:center;cursor:pointer;font:600 11px/1 'IBM Plex Mono',monospace;color:{{ muteFg }}">{{ muteLabel }}</div>
+          <div onClick="{{ toggleCaptions }}" style="width:56px;height:56px;border-radius:999px;border:1px solid rgba(246,241,232,.16);background:{{ capBg2 }};display:flex;align-items:center;justify-content:center;cursor:pointer;font:600 11px/1 'IBM Plex Mono',monospace;color:{{ capFg2 }}">CC</div>
+          <div onClick="{{ endCall }}" style="flex:1;height:56px;border-radius:999px;background:#C9502B;display:flex;align-items:center;justify-content:center;cursor:pointer;font:700 15px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#fff" style-hover="background:#dd5c33">End call</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ atReport }}" hint-placeholder-val="{{ false }}">
+      <div style="height:874px;display:flex;flex-direction:column;background:#F6F1E8">
+        <div style="flex:1;overflow:auto;padding:60px 20px 24px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42)">Call report · 9 min 42 s</div>
+            <div onClick="{{ goHome }}" style="font:600 11px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.5);cursor:pointer">CLOSE ✕</div>
+          </div>
+          <div style="margin-top:18px;background:#14110F;border-radius:26px;padding:24px;color:#F6F1E8;display:flex;align-items:flex-end;gap:18px;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-50px;bottom:-60px;width:190px;height:190px;border-radius:999px;background:rgba(15,89,81,.55);filter:blur(34px)"></div>
+            <div style="position:relative">
+              <div style="font:400 74px/.85 'Newsreader',Georgia,serif">78</div>
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:rgba(246,241,232,.5);margin-top:10px">OVERALL / 100</div>
+            </div>
+            <div style="position:relative;flex:1;display:flex;flex-direction:column;align-items:flex-end;gap:9px">
+              <div style="background:#7BC9A8;color:#0B2F27;font:700 12px/1 'IBM Plex Mono',monospace;padding:8px 12px;border-radius:999px">B2 · UPPER INT.</div>
+              <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(246,241,232,.65);text-align:right">+3 vs your last<br>IELTS mock call</div>
+            </div>
+          </div>
+
+          <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:24px">Breakdown</div>
+          <div style="margin-top:12px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:15px">
+            <sc-for list="{{ skills }}" as="s" hint-placeholder-count="4">
+              <div>
+                <div style="display:flex;align-items:baseline;justify-content:space-between">
+                  <div style="font:600 12.5px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">{{ s.label }}</div>
+                  <div style="font:600 12px/1 'IBM Plex Mono',monospace;color:{{ s.color }}">{{ s.score }}</div>
+                </div>
+                <div style="height:6px;border-radius:99px;background:rgba(20,17,15,.07);margin-top:8px;overflow:hidden"><div style="width:{{ s.pct }};height:100%;border-radius:99px;background:{{ s.color }}"></div></div>
+                <div style="font:500 11px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:6px">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:14px">
+            <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:18px;padding:14px 12px">
+              <div style="font:400 26px/1 'Newsreader',Georgia,serif;color:#14110F">9</div>
+              <div style="font:600 9.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;color:rgba(20,17,15,.5);margin-top:7px">FILLER<br>WORDS</div>
+            </div>
+            <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:18px;padding:14px 12px">
+              <div style="font:400 26px/1 'Newsreader',Georgia,serif;color:#A9761A">118</div>
+              <div style="font:600 9.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;color:rgba(20,17,15,.5);margin-top:7px">WORDS<br>PER MIN</div>
+            </div>
+            <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:18px;padding:14px 12px">
+              <div style="font:400 26px/1 'Newsreader',Georgia,serif;color:#0F5951">46%</div>
+              <div style="font:600 9.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;color:rgba(20,17,15,.5);margin-top:7px">YOUR<br>TALK TIME</div>
+            </div>
+          </div>
+          <div style="font:500 11.5px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:10px">Most used fillers: "uh" ×5, "like" ×3, "you know" ×1. Aim for 130–150 wpm on Part 1 answers.</div>
+
+          <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:24px">Three things to fix</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+            <sc-for list="{{ fixes }}" as="f" hint-placeholder-count="3">
+              <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px">
+                <div style="font:600 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#C9502B">{{ f.kind }}</div>
+                <div style="font:500 13px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.45);margin-top:9px;text-decoration:line-through">{{ f.wrong }}</div>
+                <div style="font:600 13.5px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:5px">{{ f.right }}</div>
+                <div style="font:500 11.5px/1.45 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:8px;border-top:1px solid rgba(20,17,15,.07);padding-top:8px">{{ f.why }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:24px">Practice this next</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+            <div onClick="{{ goPractice }}" style="background:#E4EEEC;border-radius:20px;padding:16px;display:flex;align-items:center;gap:13px;cursor:pointer">
+              <div style="width:40px;height:40px;border-radius:13px;background:#0F5951;color:#fff;display:flex;align-items:center;justify-content:center;font:600 12px/1 'IBM Plex Mono',monospace">4m</div>
+              <div style="flex:1"><div style="font:700 13px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#0B3B35">Present perfect drill</div><div style="font:500 11.5px/1.35 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(11,59,53,.65);margin-top:3px">12 spoken prompts · your weakest area</div></div>
+              <div style="font:600 15px/1 'IBM Plex Mono',monospace;color:#0F5951">→</div>
+            </div>
+            <div onClick="{{ goSetup }}" style="background:#FBEDE7;border-radius:20px;padding:16px;display:flex;align-items:center;gap:13px;cursor:pointer">
+              <div style="width:40px;height:40px;border-radius:13px;background:#C9502B;color:#fff;display:flex;align-items:center;justify-content:center;font:600 12px/1 'IBM Plex Mono',monospace">P2</div>
+              <div style="flex:1"><div style="font:700 13px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#5C2211">Retry Part 2 with Meera</div><div style="font:500 11.5px/1.35 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(92,34,17,.65);margin-top:3px">2-min long turn, same topic family</div></div>
+              <div style="font:600 15px/1 'IBM Plex Mono',monospace;color:#C9502B">→</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <div style="flex:1;text-align:center;padding:15px;border-radius:999px;border:1px solid rgba(20,17,15,.16);font:700 13.5px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;cursor:pointer" style-hover="background:rgba(20,17,15,.05)">Replay audio</div>
+            <div onClick="{{ goCommunity }}" style="flex:1;text-align:center;padding:15px;border-radius:999px;background:#14110F;color:#F6F1E8;font:700 13.5px/1 'Schibsted Grotesk',system-ui,sans-serif;cursor:pointer">Share to group</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ atPractice }}" hint-placeholder-val="{{ false }}">
+      <div style="height:874px;display:flex;flex-direction:column;background:#F6F1E8">
+        <div style="flex:1;overflow:auto;padding:60px 20px 24px">
+          <div style="font:400 30px/1.1 'Newsreader',Georgia,serif;color:#14110F">Practice</div>
+          <div style="font:500 13px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.55);margin-top:6px">Short solo reps between calls. No coach, no pressure.</div>
+
+          <div style="margin-top:18px;background:#0F5951;border-radius:26px;padding:22px;color:#EAF4F2;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-30px;top:-50px;width:160px;height:160px;border-radius:999px;background:rgba(123,201,168,.35);filter:blur(28px)"></div>
+            <div style="position:relative">
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(234,244,242,.6)">Daily warmup · Day 12</div>
+              <div style="font:400 25px/1.15 'Newsreader',Georgia,serif;margin-top:9px;max-width:220px">Five minutes of shadowing</div>
+              <div style="font:500 12px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(234,244,242,.65);margin-top:7px">Repeat after a native line, get instant pronunciation scores.</div>
+              <div style="margin-top:18px;display:flex;align-items:center;gap:12px">
+                <div style="background:#EAF4F2;color:#0B3B35;border-radius:999px;padding:13px 22px;font:700 14px/1 'Schibsted Grotesk',system-ui,sans-serif;cursor:pointer">Start warmup</div>
+                <div style="font:600 11px/1 'IBM Plex Mono',monospace;color:rgba(234,244,242,.6)">4 / 5 DONE THIS WEEK</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:26px">Role-play scenarios</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+            <sc-for list="{{ scenarios }}" as="s" hint-placeholder-count="4">
+              <div onClick="{{ goSetup }}" style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:15px;display:flex;align-items:center;gap:13px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+                <div style="width:42px;height:42px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;font:600 12px/1 'IBM Plex Mono',monospace;background:{{ s.tint }};color:{{ s.color }}">{{ s.tag }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font:700 13.5px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">{{ s.title }}</div>
+                  <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:3px">{{ s.meta }}</div>
+                </div>
+                <div style="font:600 14px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.3)">→</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:26px">Drills &amp; decks</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:12px">
+            <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+              <div style="font:700 13.5px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">Minimal pairs</div>
+              <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:4px">v / w · th / d</div>
+              <div style="height:6px;border-radius:99px;background:rgba(20,17,15,.07);margin-top:14px;overflow:hidden"><div style="width:62%;height:100%;background:#C9502B;border-radius:99px"></div></div>
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.45);margin-top:8px">18 / 30 PAIRS</div>
+            </div>
+            <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+              <div style="font:700 13.5px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">Flashcards</div>
+              <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:4px">Academic Word List</div>
+              <div style="height:6px;border-radius:99px;background:rgba(20,17,15,.07);margin-top:14px;overflow:hidden"><div style="width:34%;height:100%;background:#0F5951;border-radius:99px"></div></div>
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.45);margin-top:8px">41 / 120 CARDS</div>
+            </div>
+            <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+              <div style="font:700 13.5px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">Listen &amp; answer</div>
+              <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:4px">Indian &amp; British speakers</div>
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.45);margin-top:20px">6 NEW CLIPS</div>
+            </div>
+            <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:16px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+              <div style="font:700 13.5px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">Fix your fillers</div>
+              <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:4px">Pause instead of "uh"</div>
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;color:#C9502B;margin-top:20px">FROM YOUR REPORT</div>
+            </div>
+          </div>
+        </div>
+        <div style="height:84px;border-top:1px solid rgba(20,17,15,.08);background:rgba(246,241,232,.92);display:flex;align-items:flex-start;padding:10px 8px 0">
+          <div onClick="{{ goHome }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcHome }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">◆</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Home</div></div>
+          <div onClick="{{ goCoaches }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCoach }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">☏</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Coaches</div></div>
+          <div onClick="{{ goPractice }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcPractice }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▲</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Practice</div></div>
+          <div onClick="{{ goCommunity }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCommunity }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">❍</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Community</div></div>
+          <div onClick="{{ goProgress }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcProgress }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▮</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Progress</div></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ atCommunity }}" hint-placeholder-val="{{ false }}">
+      <div style="height:874px;display:flex;flex-direction:column;background:#F6F1E8">
+        <div style="flex:1;overflow:auto;padding:60px 20px 24px">
+          <div style="font:400 30px/1.1 'Newsreader',Georgia,serif;color:#14110F">Community</div>
+          <div style="font:500 13px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.55);margin-top:6px">Rooms, threads and weekly challenges with learners at your level.</div>
+
+          <div style="display:flex;align-items:center;gap:7px;margin-top:20px">
+            <span style="width:7px;height:7px;border-radius:99px;background:#C9502B;display:block;animation:blink 1.4s ease-in-out infinite"></span>
+            <span style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#C9502B">Live voice rooms</span>
+          </div>
+          <div style="display:flex;gap:11px;margin-top:11px;overflow:auto;padding-bottom:4px">
+            <div style="flex:none;width:212px;background:#14110F;border-radius:22px;padding:17px;color:#F6F1E8;cursor:pointer">
+              <div style="display:flex;align-items:center">
+                <div style="width:28px;height:28px;border-radius:99px;background:#C9502B;display:flex;align-items:center;justify-content:center;font:700 11px/1 'Schibsted Grotesk',system-ui,sans-serif">R</div>
+                <div style="width:28px;height:28px;border-radius:99px;background:#0F5951;margin-left:-8px;display:flex;align-items:center;justify-content:center;font:700 11px/1 'Schibsted Grotesk',system-ui,sans-serif">S</div>
+                <div style="width:28px;height:28px;border-radius:99px;background:#A9761A;margin-left:-8px;display:flex;align-items:center;justify-content:center;font:700 11px/1 'Schibsted Grotesk',system-ui,sans-serif">K</div>
+                <div style="font:600 11px/1 'IBM Plex Mono',monospace;color:rgba(246,241,232,.55);margin-left:9px">+9</div>
+              </div>
+              <div style="font:700 14px/1.25 'Schibsted Grotesk',system-ui,sans-serif;margin-top:13px">"Should AI grade exams?"</div>
+              <div style="font:500 11px/1.35 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(246,241,232,.55);margin-top:5px">Debate Club · moderated</div>
+              <div style="margin-top:14px;background:#C9502B;text-align:center;border-radius:999px;padding:10px;font:700 12px/1 'Schibsted Grotesk',system-ui,sans-serif">Join room</div>
+            </div>
+            <div style="flex:none;width:212px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:22px;padding:17px;cursor:pointer">
+              <div style="display:flex;align-items:center">
+                <div style="width:28px;height:28px;border-radius:99px;background:#E4EEEC;color:#0F5951;display:flex;align-items:center;justify-content:center;font:700 11px/1 'Schibsted Grotesk',system-ui,sans-serif">M</div>
+                <div style="width:28px;height:28px;border-radius:99px;background:#FBEDE7;color:#C9502B;margin-left:-8px;display:flex;align-items:center;justify-content:center;font:700 11px/1 'Schibsted Grotesk',system-ui,sans-serif">P</div>
+                <div style="font:600 11px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.45);margin-left:9px">+4</div>
+              </div>
+              <div style="font:700 14px/1.25 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:13px">Part 2 cue-card swap</div>
+              <div style="font:500 11px/1.35 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:5px">IELTS &amp; Exams · 6 speaking</div>
+              <div style="margin-top:14px;border:1px solid rgba(20,17,15,.16);text-align:center;border-radius:999px;padding:10px;font:700 12px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">Listen in</div>
+            </div>
+          </div>
+
+          <div style="margin-top:22px;background:#FAF0D8;border-radius:22px;padding:18px;display:flex;align-items:center;gap:14px">
+            <div style="width:44px;height:44px;border-radius:14px;background:#E9A227;color:#3D2A05;display:flex;align-items:center;justify-content:center;font:700 13px/1 'IBM Plex Mono',monospace">W29</div>
+            <div style="flex:1">
+              <div style="font:700 13.5px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#3D2A05">Weekly challenge: talk for 2 min without "uh"</div>
+              <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(61,42,5,.65);margin-top:4px">1,204 entries · ends Sunday</div>
+            </div>
+          </div>
+
+          <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F;margin-top:26px">Your communities</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+            <sc-for list="{{ communities }}" as="g" hint-placeholder-count="5">
+              <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:15px;display:flex;align-items:center;gap:13px;cursor:pointer" style-hover="border-color:rgba(20,17,15,.28)">
+                <div style="width:44px;height:44px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;font:400 20px/1 'Newsreader',Georgia,serif;background:{{ g.tint }};color:{{ g.color }}">{{ g.mono }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <div style="font:700 13.5px/1.2 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">{{ g.name }}</div>
+                    <sc-if value="{{ g.live }}" hint-placeholder-val="{{ false }}"><span style="font:700 8.5px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;background:#FBEDE7;color:#C9502B;padding:4px 6px;border-radius:6px">LIVE</span></sc-if>
+                  </div>
+                  <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.5);margin-top:3px">{{ g.meta }}</div>
+                  <div style="font:500 11.5px/1.4 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.72);margin-top:6px">{{ g.latest }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:22px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:22px;padding:18px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between">
+              <div style="font:700 13px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">IELTS &amp; Exams · this week</div>
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.45)">MINUTES SPOKEN</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px">
+              <sc-for list="{{ leaders }}" as="p" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:11px">
+                  <div style="font:600 11px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.4);width:16px">{{ p.rank }}</div>
+                  <div style="width:30px;height:30px;border-radius:99px;background:{{ p.tint }};color:{{ p.color }};display:flex;align-items:center;justify-content:center;font:700 11px/1 'Schibsted Grotesk',system-ui,sans-serif">{{ p.mono }}</div>
+                  <div style="flex:1;font:600 12.5px/1 'Schibsted Grotesk',system-ui,sans-serif;color:{{ p.nameFg }}">{{ p.name }}</div>
+                  <div style="font:600 12px/1 'IBM Plex Mono',monospace;color:#14110F">{{ p.mins }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:16px;border-top:1px solid rgba(20,17,15,.08);padding-top:14px;display:flex;align-items:center;gap:12px">
+              <div style="flex:1;font:500 11.5px/1.45 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.55)">Want a human partner? We'll match you with someone at B2 tonight.</div>
+              <div style="background:#14110F;color:#F6F1E8;border-radius:999px;padding:11px 15px;font:700 12px/1 'Schibsted Grotesk',system-ui,sans-serif;cursor:pointer">Match me</div>
+            </div>
+          </div>
+        </div>
+        <div style="height:84px;border-top:1px solid rgba(20,17,15,.08);background:rgba(246,241,232,.92);display:flex;align-items:flex-start;padding:10px 8px 0">
+          <div onClick="{{ goHome }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcHome }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">◆</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Home</div></div>
+          <div onClick="{{ goCoaches }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCoach }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">☏</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Coaches</div></div>
+          <div onClick="{{ goPractice }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcPractice }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▲</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Practice</div></div>
+          <div onClick="{{ goCommunity }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCommunity }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">❍</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Community</div></div>
+          <div onClick="{{ goProgress }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcProgress }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▮</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Progress</div></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ atProgress }}" hint-placeholder-val="{{ false }}">
+      <div style="height:874px;display:flex;flex-direction:column;background:#F6F1E8">
+        <div style="flex:1;overflow:auto;padding:60px 20px 24px">
+          <div style="font:400 30px/1.1 'Newsreader',Georgia,serif;color:#14110F">Progress</div>
+          <div style="font:500 13px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.55);margin-top:6px">14 weeks in. Here's the shape of it.</div>
+
+          <div style="margin-top:18px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:24px;padding:20px">
+            <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42)">CEFR journey</div>
+            <div style="display:flex;align-items:flex-end;gap:5px;margin-top:16px">
+              <div style="flex:1;text-align:center"><div style="height:26px;border-radius:8px 8px 3px 3px;background:#0F5951"></div><div style="font:600 10px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.5);margin-top:7px">A1</div></div>
+              <div style="flex:1;text-align:center"><div style="height:42px;border-radius:8px 8px 3px 3px;background:#0F5951"></div><div style="font:600 10px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.5);margin-top:7px">A2</div></div>
+              <div style="flex:1;text-align:center"><div style="height:60px;border-radius:8px 8px 3px 3px;background:#0F5951"></div><div style="font:600 10px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.5);margin-top:7px">B1</div></div>
+              <div style="flex:1.35;text-align:center"><div style="height:86px;border-radius:8px 8px 3px 3px;background:#C9502B"></div><div style="font:700 10px/1 'IBM Plex Mono',monospace;color:#C9502B;margin-top:7px">B2 · NOW</div></div>
+              <div style="flex:1;text-align:center"><div style="height:104px;border-radius:8px 8px 3px 3px;background:rgba(20,17,15,.09)"></div><div style="font:600 10px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.35);margin-top:7px">C1</div></div>
+            </div>
+            <div style="font:500 12px/1.5 'Schibsted Grotesk',system-ui,sans-serif;color:rgba(20,17,15,.55);margin-top:16px;border-top:1px solid rgba(20,17,15,.07);padding-top:14px">You've been at B2 for 5 weeks. Grammar accuracy is the gate to C1 — it needs to hold above 85% for three calls in a row.</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:14px">
+            <div style="background:#14110F;border-radius:20px;padding:17px;color:#F6F1E8">
+              <div style="font:400 34px/1 'Newsreader',Georgia,serif">12</div>
+              <div style="font:600 9.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;color:rgba(246,241,232,.55);margin-top:8px">DAY STREAK</div>
+            </div>
+            <div style="background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:20px;padding:17px">
+              <div style="font:400 34px/1 'Newsreader',Georgia,serif;color:#14110F">9.4</div>
+              <div style="font:600 9.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;color:rgba(20,17,15,.5);margin-top:8px">HOURS SPOKEN</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:24px;padding:20px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between">
+              <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42)">Minutes per week</div>
+              <div style="font:600 11px/1 'IBM Plex Mono',monospace;color:#0F5951">↑ 22%</div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:7px;height:96px;margin-top:16px">
+              <sc-for list="{{ weeks }}" as="w" hint-placeholder-count="8">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px">
+                  <div style="width:100%;height:{{ w.h }};border-radius:6px;background:{{ w.color }}"></div>
+                  <div style="font:600 9px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.4)">{{ w.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:24px;padding:20px">
+            <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42)">Skills, last 10 calls</div>
+            <div style="display:flex;flex-direction:column;gap:14px;margin-top:16px">
+              <sc-for list="{{ trend }}" as="t" hint-placeholder-count="4">
+                <div>
+                  <div style="display:flex;align-items:baseline;justify-content:space-between">
+                    <div style="font:600 12.5px/1 'Schibsted Grotesk',system-ui,sans-serif;color:#14110F">{{ t.label }}</div>
+                    <div style="font:600 11px/1 'IBM Plex Mono',monospace;color:{{ t.dColor }}">{{ t.delta }}</div>
+                  </div>
+                  <div style="height:6px;border-radius:99px;background:rgba(20,17,15,.07);margin-top:8px;overflow:hidden"><div style="width:{{ t.pct }};height:100%;border-radius:99px;background:{{ t.color }}"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;background:#fff;border:1px solid rgba(20,17,15,.08);border-radius:24px;padding:20px">
+            <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(20,17,15,.42)">Last 28 days</div>
+            <div style="display:grid;grid-template-columns:repeat(14,1fr);gap:6px;margin-top:16px">
+              <sc-for list="{{ dots }}" as="d" hint-placeholder-count="28">
+                <div style="aspect-ratio:1;border-radius:5px;background:{{ d.color }}"></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:#C9502B;display:block"></span><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.5)">CALL</span></div>
+              <div style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:#EFD3C6;display:block"></span><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.5)">PRACTICE</span></div>
+              <div style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:rgba(20,17,15,.08);display:block"></span><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.5)">REST</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="height:84px;border-top:1px solid rgba(20,17,15,.08);background:rgba(246,241,232,.92);display:flex;align-items:flex-start;padding:10px 8px 0">
+          <div onClick="{{ goHome }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcHome }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">◆</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Home</div></div>
+          <div onClick="{{ goCoaches }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCoach }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">☏</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Coaches</div></div>
+          <div onClick="{{ goPractice }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcPractice }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▲</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Practice</div></div>
+          <div onClick="{{ goCommunity }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcCommunity }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">❍</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Community</div></div>
+          <div onClick="{{ goProgress }}" style="flex:1;text-align:center;cursor:pointer;color:{{ tcProgress }}"><div style="font:700 17px/1 'IBM Plex Mono',monospace">▮</div><div style="font:600 10px/1 'Schibsted Grotesk',system-ui,sans-serif;margin-top:7px">Progress</div></div>
+        </div>
+      </div>
+      </sc-if>
+
+    </x-import>
+    <div style="font:500 11px/1 'IBM Plex Mono',monospace;color:rgba(20,17,15,.4)">{{ frameCaption }}</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;callVisual&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;waveform&quot;,&quot;orb&quot;],&quot;default&quot;:&quot;waveform&quot;,&quot;tsType&quot;:&quot;'waveform'|'orb'&quot;,&quot;section&quot;:&quot;Active call&quot;},&quot;showCaptions&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Active call&quot;},&quot;gamified&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Home&quot;}}">
+const INK='#14110F', CLAY='#C9502B', TEAL='#0F5951', GOLD='#A9761A';
+const COACHES=[
+ {mono:'M',name:'Meera',role:'IELTS Speaking Examiner',focus:'Band 6.5 → 8.0',accent:'British RP',rating:'4.9',color:TEAL,tint:'#E4EEEC',goal:'ielts',
+  bio:'Runs full mock tests in examiner mode — Parts 1 to 3, timed, no hand-holding. Scores you on the real band descriptors.',
+  subtitle:'IELTS mock · Part 1 of 3'},
+ {mono:'R',name:'Rohan',role:'Interview Coach',focus:'HR + tech rounds',accent:'Neutral Indian',rating:'4.8',color:CLAY,tint:'#FBEDE7',goal:'interview',
+  bio:'Plays the hiring manager for product, IT services and campus placements. Pushes on your weakest answer until it lands.',
+  subtitle:'Interview · behavioural round'},
+ {mono:'Z',name:'Zoya',role:'Daily English Partner',focus:'Small talk & confidence',accent:'Warm American',rating:'4.9',color:GOLD,tint:'#FAF0D8',goal:'daily',
+  bio:'Just chats. Weekend plans, office news, ordering food — corrects gently, never breaks the flow of conversation.',
+  subtitle:'Daily English · free chat'},
+ {mono:'V',name:'Vikram',role:'Debate & Fluency Coach',focus:'Argue under pressure',accent:'Crisp Indian',rating:'4.7',color:INK,tint:'rgba(20,17,15,.07)',goal:'debate',
+  bio:'Takes the opposite side of any motion and interrupts. Best for people who freeze when challenged mid-sentence.',
+  subtitle:'Debate · motion round'},
+ {mono:'N',name:'Nisha',role:'Pronunciation Drill Coach',focus:'Sounds & stress',accent:'Slow & clear',rating:'4.9',color:TEAL,tint:'#E4EEEC',goal:'daily',
+  bio:'Word-by-word repair work on the sounds Indian speakers get flagged for: v/w, th, and stress in long words.',
+  subtitle:'Pronunciation · drill mode'},
+ {mono:'K',name:'Kabir',role:'Kids & Teens Tutor',focus:'Ages 8–15',accent:'Playful',rating:'4.8',color:CLAY,tint:'#FBEDE7',goal:'kids',
+  bio:'Story games and show-and-tell. Keeps a 10-minute cap and sends a parent-friendly summary after every call.',
+  subtitle:'Kids · story game'}];
+const FILTERS=[{id:'all',label:'All coaches'},{id:'ielts',label:'IELTS & exams'},{id:'interview',label:'Interview'},{id:'daily',label:'Daily English'},{id:'debate',label:'Debate'},{id:'kids',label:'Kids'}];
+const TOPICS=['Hometown & studies','Work & career','Technology','Surprise me'];
+const TURNS=[
+ {who:'coach',text:"Let's begin Part 1. Tell me a little about the place where you grew up."},
+ {who:'you',text:"I grew up in Pune. Uh, it's a city in Maharashtra, and I am living there since my childhood.",fix:"“I've lived there since childhood” — present perfect, not present continuous."},
+ {who:'coach',text:"Thank you. And what do you like most about living there?"},
+ {who:'you',text:"The weather is quite pleasant, and there are many good colleges, so the city feels young."},
+ {who:'coach',text:"Good — extend that with one example. Which part of the city feels the youngest to you?"},
+ {who:'you',text:"Definitely FC Road. Every evening it is full of students, uh, discussing about their exams.",fix:"“discussing their exams” — discuss takes no preposition."}];
+const SCEN=[
+ {tag:'JOB',title:'Job interview: tell me about yourself',meta:'8 min · Rohan · medium',color:CLAY,tint:'#FBEDE7'},
+ {tag:'AIR',title:'Airport check-in gone wrong',meta:'6 min · Zoya · easy',color:GOLD,tint:'#FAF0D8'},
+ {tag:'RENT',title:'Negotiating rent with a landlord',meta:'7 min · Vikram · hard',color:INK,tint:'rgba(20,17,15,.07)'},
+ {tag:'CAFE',title:'Ordering for a table of six',meta:'5 min · Zoya · easy',color:TEAL,tint:'#E4EEEC'}];
+const COMM=[
+ {mono:'I',name:'IELTS & Exams',meta:'24.1k members · 3 rooms today',latest:'“Got 7.5 — here is the Part 3 trick that saved me”',color:TEAL,tint:'#E4EEEC',live:true},
+ {mono:'D',name:'Daily English',meta:'58.3k members · very active',latest:'Thread: 30 ways to answer “how was your weekend?”',color:GOLD,tint:'#FAF0D8',live:false},
+ {mono:'B',name:'Debate Club',meta:'7.8k members · Tue & Fri rooms',latest:'Tonight’s motion: AI should grade school exams',color:CLAY,tint:'#FBEDE7',live:true},
+ {mono:'P',name:'Interview Prep',meta:'12.4k members · mock swaps',latest:'Anyone free for a 20-min HR mock at 9pm IST?',color:INK,tint:'rgba(20,17,15,.07)',live:false},
+ {mono:'K',name:'Kids’ English',meta:'4.2k members · parents only',latest:'Weekly show-and-tell prompts for 8–10 year olds',color:TEAL,tint:'#E4EEEC',live:false}];
+const LEAD=[
+ {rank:'1',mono:'S',name:'Sneha R.',mins:'182',color:'#0F5951',tint:'#E4EEEC'},
+ {rank:'2',mono:'A',name:'You',mins:'164',color:'#fff',tint:CLAY},
+ {rank:'3',mono:'F',name:'Farhan K.',mins:'151',color:'#A9761A',tint:'#FAF0D8'},
+ {rank:'4',mono:'D',name:'Divya M.',mins:'139',color:'#14110F',tint:'rgba(20,17,15,.07)'}];
+const NAV=[['home','Home'],['coaches','Coaches'],['setup','Call setup'],['call','Active call'],['report','Call report'],['practice','Practice'],['community','Community'],['progress','Progress']];
+
+class Component extends DCLogic {
+  state={screen:'home',coach:0,filter:'all',topic:0,level:'B2',dur:10,muted:false,captions:true,sec:0,turn:1};
+  componentDidMount(){
+    this.t=setInterval(()=>{
+      if(this.state.screen!=='call')return;
+      this.setState(s=>{
+        const sec=s.sec+1;
+        const turn=(sec%4===0&&s.turn<TURNS.length)?s.turn+1:s.turn;
+        return {sec,turn};
+      });
+    },1000);
+  }
+  componentWillUnmount(){clearInterval(this.t);}
+  go=(screen)=>this.setState({screen});
+  renderVals(){
+    const s=this.state, sc=s.screen, c=COACHES[s.coach];
+    const cap=this.props.showCaptions ?? s.captions;
+    const visual=this.props.callVisual ?? 'waveform';
+    const gamified=this.props.gamified ?? true;
+    const tab=(names)=>names.indexOf(sc)>=0?INK:'rgba(20,17,15,.35)';
+    const mm=String(Math.floor(s.sec/60)).padStart(2,'0'), ss=String(s.sec%60).padStart(2,'0');
+    const visible=TURNS.slice(0,s.turn).slice(-3);
+    const speaker=TURNS[Math.min(s.turn,TURNS.length)-1].who;
+    const idx=NAV.findIndex(n=>n[0]===sc);
+    return {
+      atHome:sc==='home',atCoaches:sc==='coaches',atSetup:sc==='setup',atCall:sc==='call',
+      atReport:sc==='report',atPractice:sc==='practice',atCommunity:sc==='community',atProgress:sc==='progress',
+      isDark:sc==='call', gamified,
+      goHome:()=>this.go('home'),goCoaches:()=>this.go('coaches'),goSetup:()=>this.go('setup'),
+      goPractice:()=>this.go('practice'),goCommunity:()=>this.go('community'),goProgress:()=>this.go('progress'),
+      goReport:()=>this.go('report'),
+      startCall:()=>this.setState({screen:'call',sec:0,turn:1,muted:false}),
+      endCall:()=>this.setState({screen:'report'}),
+      toggleMute:()=>this.setState(p=>({muted:!p.muted})),
+      toggleCaptions:()=>this.setState(p=>({captions:!p.captions})),
+      tcHome:tab(['home']),tcCoach:tab(['coaches','setup','call']),tcPractice:tab(['practice']),
+      tcCommunity:tab(['community']),tcProgress:tab(['progress']),
+      navItems:NAV.map(([id,label],i)=>({n:String(i+1).padStart(2,'0'),label,go:()=>this.go(id),
+        bg:sc===id?'rgba(20,17,15,.09)':'transparent',
+        fg:sc===id?INK:'rgba(20,17,15,.62)',num:sc===id?CLAY:'rgba(20,17,15,.35)'})),
+      frameCaption:'Screen '+String(idx+1).padStart(2,'0')+' — '+NAV[idx][1]+' · iPhone 402 × 874',
+      filters:FILTERS.map(f=>({label:f.label,pick:()=>this.setState({filter:f.id}),
+        bg:s.filter===f.id?INK:'transparent',fg:s.filter===f.id?'#F6F1E8':'rgba(20,17,15,.6)',
+        bd:s.filter===f.id?INK:'rgba(20,17,15,.14)'})),
+      coachList:COACHES.map((x,i)=>({...x,open:()=>this.setState({screen:'setup',coach:i})}))
+        .filter(x=>s.filter==='all'||x.goal===s.filter),
+      coachMono:c.mono,coachName:c.name,coachRole:c.role,coachBio:c.bio,coachColor:c.color,
+      coachTint:c.tint,coachFirst:c.name,callSubtitle:c.subtitle,
+      topics:TOPICS.map((t,i)=>({label:t,pick:()=>this.setState({topic:i}),
+        bg:s.topic===i?'#FBEDE7':'#fff',fg:s.topic===i?CLAY:'rgba(20,17,15,.6)',
+        bd:s.topic===i?'rgba(201,80,43,.35)':'rgba(20,17,15,.1)'})),
+      levels:['B1','B2','C1'].map(l=>({label:l,pick:()=>this.setState({level:l}),
+        bg:s.level===l?'#fff':'transparent',fg:s.level===l?INK:'rgba(20,17,15,.45)'})),
+      durations:[5,10,20].map(d=>({label:d+'m',pick:()=>this.setState({dur:d}),
+        bg:s.dur===d?'#fff':'transparent',fg:s.dur===d?INK:'rgba(20,17,15,.45)'})),
+      durMins:s.dur+' min',
+      capBg:cap?CLAY:'rgba(20,17,15,.18)',capJustify:cap?'flex-end':'flex-start',
+      capBg2:cap?'rgba(246,241,232,.16)':'transparent',capFg2:cap?'#F6F1E8':'rgba(246,241,232,.55)',
+      muteBg:s.muted?'#F6F1E8':'transparent',muteFg:s.muted?INK:'rgba(246,241,232,.8)',
+      muteLabel:s.muted?'OFF':'MIC',
+      timer:mm+':'+ss, showCaptions:cap, isOrb:visual==='orb', isWave:visual==='waveform',
+      speakerLabel:speaker==='coach'?c.name+' is speaking':'Your turn — keep going',
+      lines:visible.map(l=>({
+        text:l.text,fix:l.fix,hasFix:!!l.fix,name:l.who==='coach'?c.name:'You',
+        align:l.who==='coach'?'flex-start':'flex-end',
+        bg:l.who==='coach'?'rgba(246,241,232,.08)':'rgba(201,80,43,.16)',
+        bd:l.who==='coach'?'rgba(246,241,232,.12)':'rgba(201,80,43,.3)',
+        radius:l.who==='coach'?'18px 18px 18px 6px':'18px 18px 6px 18px',
+        who:l.who==='coach'?'rgba(246,241,232,.45)':'rgba(240,201,140,.85)',
+        fg:'#F6F1E8'})),
+      skills:[
+        {label:'Fluency & coherence',score:'82',pct:'82%',color:TEAL,note:'Long turns held well; two long pauses in Part 1.'},
+        {label:'Pronunciation',score:'74',pct:'74%',color:GOLD,note:'“v / w” swapped 4 times — very / wery.'},
+        {label:'Grammar range',score:'71',pct:'71%',color:CLAY,note:'Present perfect and articles are the weak spots.'},
+        {label:'Vocabulary',score:'80',pct:'80%',color:TEAL,note:'Good topic words; try one idiom per answer.'}],
+      fixes:[
+        {kind:'Tense · said 3×',wrong:'I am living there since my childhood.',right:"I've lived there since childhood.",why:'“Since” plus a starting point needs present perfect.'},
+        {kind:'Preposition',wrong:'They were discussing about their exams.',right:'They were discussing their exams.',why:'Discuss never takes “about”.'},
+        {kind:'Filler habit',wrong:'Uh… the weather is, uh, quite pleasant.',right:'(pause) The weather is quite pleasant.',why:'A half-second silence reads as confidence; “uh” reads as hesitation.'}],
+      scenarios:SCEN, communities:COMM,
+      leaders:LEAD.map(p=>({...p,nameFg:p.name==='You'?CLAY:INK})),
+      weeks:[38,52,44,61,49,70,58,79].map((v,i)=>({label:'W'+(22+i),h:Math.round(v*1.1)+'px',color:i===7?CLAY:'rgba(201,80,43,.28)'})),
+      dots:[2,1,0,1,1,2,0,1,1,2,0,1,1,1,2,1,1,0,1,2,1,1,2,1,1,1,2,1].map(v=>({color:v===2?CLAY:(v===1?'#EFD3C6':'rgba(20,17,15,.08)')})),
+      trend:[
+        {label:'Fluency',pct:'82%',color:TEAL,delta:'↑ 6',dColor:TEAL},
+        {label:'Pronunciation',pct:'74%',color:GOLD,delta:'↑ 2',dColor:TEAL},
+        {label:'Grammar',pct:'71%',color:CLAY,delta:'↓ 1',dColor:CLAY},
+        {label:'Vocabulary',pct:'80%',color:TEAL,delta:'↑ 9',dColor:TEAL}]
+    };
+  }
+}
+</script>
+</body>
+</html>

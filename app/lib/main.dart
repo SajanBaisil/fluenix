@@ -120,6 +120,16 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
+
+  void _goToTab(int i) {
+    setState(() => _tab = i);
+    // Coming back to a tab → refresh its data.
+    if (i == 0) _homeKey.currentState?.refresh();
+    if (i == 2) _practiceKey.currentState?.refresh();
+    if (i == 3) _communityKey.currentState?.refresh();
+    if (i == 4) _progressKey.currentState?.refresh();
+  }
+
   final _homeKey = GlobalKey<HomeScreenState>();
   final _practiceKey = GlobalKey<PracticeScreenState>();
   final _communityKey = GlobalKey<CommunityScreenState>();
@@ -131,7 +141,7 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(
         index: _tab,
         children: [
-          HomeScreen(key: _homeKey),
+          HomeScreen(key: _homeKey, onGoToTab: _goToTab),
           const CoachScreen(),
           PracticeScreen(key: _practiceKey),
           CommunityScreen(key: _communityKey),
@@ -140,34 +150,31 @@ class _HomeShellState extends State<HomeShell> {
       ),
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
-          backgroundColor: const Color(0xF20B0E1A),
-          indicatorColor: Tokens.indigo.withValues(alpha: 0.22),
-          labelTextStyle: WidgetStatePropertyAll(
-            const TextStyle(
-              fontSize: 10.5,
+          backgroundColor: const Color(0xEBF6F1E8),
+          indicatorColor: Colors.transparent,
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => TextStyle(
+              fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: Tokens.muted,
+              color: states.contains(WidgetState.selected)
+                  ? Tokens.ink
+                  : Tokens.ink35,
             ),
           ),
           iconTheme: WidgetStateProperty.resolveWith(
             (states) => IconThemeData(
+              size: 20,
               color: states.contains(WidgetState.selected)
-                  ? Tokens.indigoSoft
-                  : Tokens.faint,
+                  ? Tokens.ink
+                  : Tokens.ink35,
             ),
           ),
         ),
         child: NavigationBar(
           selectedIndex: _tab,
-          height: 64,
-          onDestinationSelected: (i) {
-            setState(() => _tab = i);
-            // Coming back to a tab → refresh its data.
-            if (i == 0) _homeKey.currentState?.refresh();
-            if (i == 2) _practiceKey.currentState?.refresh();
-            if (i == 3) _communityKey.currentState?.refresh();
-            if (i == 4) _progressKey.currentState?.refresh();
-          },
+          height: 68,
+          onDestinationSelected: _goToTab,
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.home_rounded),

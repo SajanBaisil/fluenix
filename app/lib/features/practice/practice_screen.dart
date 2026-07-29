@@ -128,30 +128,85 @@ class PracticeScreenState extends State<PracticeScreen> {
 
   Widget _content(PracticePack pack) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Practice',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-              ),
-            ),
-            IconButton(
-              tooltip: 'New drills',
-              onPressed: _regenerate,
-              icon: const Icon(Icons.refresh_rounded,
-                  color: Tokens.faint, size: 20),
-            ),
-          ],
-        ),
+        Text('Practice', style: Type.display(30)),
+        const SizedBox(height: 5),
         const Text(
           'Made from your own mistakes — clear these before your next call.',
-          style: TextStyle(fontSize: 13, color: Tokens.muted),
+          style: TextStyle(fontSize: 13, color: Tokens.ink60),
+        ),
+        const SizedBox(height: 16),
+        // Teal hero (design §06)
+        ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            color: Tokens.teal,
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -60,
+                  right: -40,
+                  child: Container(
+                    width: 170,
+                    height: 170,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [Color(0x527BC9A8), Colors.transparent],
+                        stops: [0, 0.9],
+                      ),
+                    ),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('TODAY\'S DRILLS',
+                        style: Type.mono(9.5,
+                            color: const Color(0xB8F6F1E8), ls: 1.6)),
+                    const SizedBox(height: 7),
+                    Text('Fix it before the next call',
+                        style: Type.display(24, color: Tokens.cream)),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _regenerate,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 11),
+                            decoration: BoxDecoration(
+                              color: Tokens.cream,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'New drills',
+                              style: TextStyle(
+                                color: Tokens.teal,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${_done.length} / ${pack.exercises.length} DONE',
+                          style: Type.mono(10,
+                              color: const Color(0xB8F6F1E8), ls: 1),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
         if (pack.exercises.isNotEmpty) ...[
-          _label('DRILLS · ${_done.length}/${pack.exercises.length} DONE'),
+          _label('DRILLS'),
           for (final (i, ex) in pack.exercises.indexed) _drill(i, ex),
         ],
         if (pack.mistakes.isNotEmpty) ...[
@@ -215,9 +270,9 @@ class PracticeScreenState extends State<PracticeScreen> {
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Tokens.card,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: done ? Tokens.mint.withValues(alpha: 0.45) : Tokens.line,
+          color: done ? const Color(0x730F5951) : Tokens.line,
         ),
       ),
       child: Column(
@@ -227,10 +282,10 @@ class PracticeScreenState extends State<PracticeScreen> {
             children: [
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Tokens.indigo.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(5),
+                  color: Tokens.clayTint,
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   switch (ex.kind) {
@@ -238,18 +293,14 @@ class PracticeScreenState extends State<PracticeScreen> {
                     'choose' => 'PICK ONE',
                     _ => 'UPGRADE',
                   },
-                  style: const TextStyle(
-                    fontSize: 8.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.7,
-                    color: Tokens.indigoSoft,
-                  ),
+                  style: Type.mono(8.5,
+                      color: Tokens.clay, weight: FontWeight.w700, ls: 0.7),
                 ),
               ),
               const Spacer(),
               if (done)
                 const Icon(Icons.check_circle_rounded,
-                    color: Tokens.mint, size: 18),
+                    color: Tokens.teal, size: 18),
             ],
           ),
           const SizedBox(height: 10),
@@ -266,9 +317,8 @@ class PracticeScreenState extends State<PracticeScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Tokens.cardHi,
+                  color: Tokens.inkSoft,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Tokens.line),
                 ),
                 child: const Text(
                   'Say it out loud, then reveal the answer',
@@ -276,7 +326,7 @@ class PracticeScreenState extends State<PracticeScreen> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: Tokens.indigoSoft,
+                    color: Tokens.clay,
                   ),
                 ),
               ),
@@ -287,7 +337,7 @@ class PracticeScreenState extends State<PracticeScreen> {
               children: [
                 const Text('✓ ',
                     style: TextStyle(
-                        color: Tokens.mint,
+                        color: Tokens.teal,
                         fontSize: 13,
                         fontWeight: FontWeight.w800)),
                 Expanded(
@@ -318,7 +368,7 @@ class PracticeScreenState extends State<PracticeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 9),
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Tokens.mint.withValues(alpha: 0.14),
+                    color: Tokens.tealTint,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
@@ -327,7 +377,7 @@ class PracticeScreenState extends State<PracticeScreen> {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: Tokens.mint,
+                      color: Tokens.teal,
                     ),
                   ),
                 ),
@@ -349,7 +399,7 @@ class PracticeScreenState extends State<PracticeScreen> {
             color: Tokens.muted,
             fontSize: 13,
             decoration: TextDecoration.lineThrough,
-            decorationColor: Color(0x8CF87171),
+            decorationColor: Color(0x8CC9502B),
           ),
         ),
         const SizedBox(height: 4),
@@ -373,14 +423,6 @@ class PracticeScreenState extends State<PracticeScreen> {
 
   Widget _label(String text) => Padding(
         padding: const EdgeInsets.only(top: 22, bottom: 10),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.3,
-            color: Tokens.faint,
-          ),
-        ),
+        child: Text(text, style: Type.mono(10, color: Tokens.ink50, ls: 1.4)),
       );
 }

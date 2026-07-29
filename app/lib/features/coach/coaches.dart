@@ -2,35 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/profile.dart';
+import '../../theme/app_theme.dart';
 
-/// The coach roster (PLAN.md §3, mockup 05). Each coach is a personality,
-/// a voice, and a gradient that follows them through the whole app.
+/// The coach roster (PLAN.md §3, design/README.md §02). Each coach is a
+/// personality, a voice, and a signature color + tint that follows them
+/// through the app (monogram tiles, role text, chips).
 class Coach {
   const Coach({
     required this.id,
     required this.name,
     required this.tag,
+    required this.role,
     required this.desc,
     required this.voice,
-    required this.colors,
+    required this.color,
+    required this.tint,
+    required this.accent,
+    required this.focus,
+    required this.rating,
     required this.persona,
   });
 
   final String id;
   final String name;
   final String tag;
+
+  /// Short role line shown in the coach's color ("Interview Coach").
+  final String role;
   final String desc;
 
   /// Gemini prebuilt voice name.
   final String voice;
-  final List<Color> colors;
+
+  /// Signature color (monogram letter, role text) + soft tint (tile bg).
+  final Color color;
+  final Color tint;
+
+  /// Meta chips: voice accent + specialty focus.
+  final String accent;
+  final String focus;
+  final String rating;
   final String persona;
 
-  LinearGradient get gradient => LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: colors,
-      );
+  // Legacy shims for widgets not yet migrated to color/tint.
+  List<Color> get colors => [color, color];
+  LinearGradient get gradient => LinearGradient(colors: [color, color]);
 }
 
 const coaches = [
@@ -38,9 +54,14 @@ const coaches = [
     id: 'asha',
     name: 'Asha',
     tag: 'PATIENT',
+    role: 'Gentle-Start Coach',
     desc: 'Speaks slowly, explains simply. The gentlest way to start.',
     voice: 'Kore',
-    colors: [Color(0xFFF472B6), Color(0xFFA855F7)],
+    color: Tokens.ink,
+    tint: Tokens.inkSoft,
+    accent: 'Slow & clear',
+    focus: 'Confidence',
+    rating: '4.9',
     persona: 'You are Asha, a warm and endlessly patient English coach from '
         'Bengaluru. You understand exactly how Indian learners think because '
         'you learned English yourself. Speak a little slower than normal, use '
@@ -52,9 +73,14 @@ const coaches = [
     id: 'emma',
     name: 'Emma',
     tag: 'FRIENDLY',
+    role: 'Daily English Partner',
     desc: 'Chatty American friend — interrupts, laughs, asks follow-ups.',
     voice: 'Aoede',
-    colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
+    color: Tokens.goldText,
+    tint: Tokens.goldTint,
+    accent: 'Warm American',
+    focus: 'Small talk',
+    rating: '4.9',
     persona: 'You are Emma, a cheerful American in your late twenties talking '
         'to a friend on the phone. Be genuinely curious, react naturally '
         '("oh really?", "no way!"), laugh sometimes, and ask playful '
@@ -64,9 +90,14 @@ const coaches = [
     id: 'david',
     name: 'David',
     tag: 'INTERVIEWER',
+    role: 'Interview Coach',
     desc: 'Strict HR manager. Presses on weak answers — like the real thing.',
     voice: 'Charon',
-    colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)],
+    color: Tokens.clay,
+    tint: Tokens.clayTint,
+    accent: 'Neutral Indian',
+    focus: 'HR + tech rounds',
+    rating: '4.8',
     persona: 'You are David, a senior HR manager conducting a professional '
         'job interview. Be polite but businesslike. Ask one interview '
         'question at a time, press with follow-ups when answers are vague '
@@ -77,9 +108,14 @@ const coaches = [
     id: 'leo',
     name: 'Leo',
     tag: 'EXAMINER',
+    role: 'IELTS Speaking Examiner',
     desc: 'Runs real IELTS speaking parts 1–3 with examiner-style questions.',
     voice: 'Orus',
-    colors: [Color(0xFF34D399), Color(0xFF0EA5E9)],
+    color: Tokens.teal,
+    tint: Tokens.tealTint,
+    accent: 'British RP',
+    focus: 'Band 6.5 → 8.0',
+    rating: '4.9',
     persona: 'You are Leo, an IELTS speaking examiner. Run the session like '
         'the real test: Part 1 (familiar topics), then Part 2 (give a cue '
         'card topic, let them speak for 1-2 minutes), then Part 3 (abstract '
@@ -149,6 +185,8 @@ String buildSystemPrompt(
   String memory = '',
   int? lastCallDaysAgo,
   String scenarioContext = '',
+  String levelOverride = '',
+  int? targetMinutes,
 }) {
   final focus = focusPoints.isEmpty
       ? ''
@@ -159,7 +197,8 @@ String buildSystemPrompt(
           'your reply — never lecture.';
 
   final p = ProfileService.current;
-  final levelHint = switch (p.level) {
+  final level = levelOverride.isNotEmpty ? levelOverride : p.level;
+  final levelHint = switch (level) {
     'beginner' => 'Use short, simple sentences and everyday words. Speak a '
         'touch slower. Celebrate small wins.',
     'advanced' => 'Use rich, natural vocabulary and idioms. Push them with '
@@ -175,8 +214,11 @@ String buildSystemPrompt(
   };
   final learner = '\n\nAbout the learner: '
       '${p.name.isNotEmpty ? 'Their name is ${p.name} — use it naturally. ' : ''}'
-      'Their level is ${p.level}. $levelHint '
-      'Their overall goal is $goalLabel.';
+      'Their level is $level. $levelHint '
+      'Their overall goal is $goalLabel.'
+      '${targetMinutes != null ? ' They planned roughly $targetMinutes '
+          'minutes for this call — start wrapping up naturally as that '
+          'approaches.' : ''}';
 
   var continuity = '';
   if (memory.isNotEmpty) {

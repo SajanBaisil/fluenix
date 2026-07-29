@@ -272,11 +272,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     };
   }
 
-  Widget _title(String t) => Text(
-        t,
-        style: const TextStyle(
-            fontSize: 27, fontWeight: FontWeight.w800, height: 1.25),
-      );
+  Widget _title(String t) => Text(t, style: Type.display(30, height: 1.15));
 
   Widget _sub(String t) => Padding(
         padding: const EdgeInsets.only(top: 6),

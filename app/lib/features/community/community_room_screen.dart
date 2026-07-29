@@ -304,14 +304,14 @@ class _CommunityRoomScreenState extends State<CommunityRoomScreen> {
         .showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // Stable accent per sender for their name label.
+  // Stable accent per sender for their name label (design accents).
   static const _nameColors = [
-    Color(0xFF94A3FF),
-    Color(0xFFF472B6),
-    Color(0xFF34D399),
-    Color(0xFF38BDF8),
-    Color(0xFFFBBF24),
-    Color(0xFFC084FC),
+    Tokens.clay,
+    Tokens.teal,
+    Tokens.goldText,
+    Color(0xFF7C5CB8),
+    Color(0xFF356B8C),
+    Color(0xFFB03F1F),
   ];
 
   Color _nameColor(String userId) =>
@@ -333,16 +333,19 @@ class _CommunityRoomScreenState extends State<CommunityRoomScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                gradient: communityGradient(c.slug),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(c.emoji, style: const TextStyle(fontSize: 16)),
-            ),
+            Builder(builder: (_) {
+              final (color, tint) = communityStyle(c.slug);
+              return Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tint,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(c.name[0], style: Type.display(16, color: color)),
+              );
+            }),
             const SizedBox(width: 10),
             Text(
               c.name,
@@ -406,16 +409,19 @@ class _CommunityRoomScreenState extends State<CommunityRoomScreen> {
       child: Column(
         children: [
           const Spacer(),
-          Container(
-            width: 72,
-            height: 72,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: communityGradient(c.slug),
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Text(c.emoji, style: const TextStyle(fontSize: 34)),
-          ),
+          Builder(builder: (_) {
+            final (color, tint) = communityStyle(c.slug);
+            return Container(
+              width: 72,
+              height: 72,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: tint,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Text(c.name[0], style: Type.display(34, color: color)),
+            );
+          }),
           const SizedBox(height: 18),
           Text(
             c.name,
@@ -474,7 +480,7 @@ class _CommunityRoomScreenState extends State<CommunityRoomScreen> {
             maxWidth: MediaQuery.of(context).size.width * 0.78,
           ),
           decoration: BoxDecoration(
-            color: mine ? Tokens.indigo.withValues(alpha: 0.28) : Tokens.card,
+            color: mine ? Tokens.clayTint : Tokens.card,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),

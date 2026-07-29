@@ -32,21 +32,16 @@ class Community {
       );
 }
 
-/// Each room keeps a signature gradient through the app, like coaches do.
-LinearGradient communityGradient(String slug) {
-  const map = {
-    'interview-prep': [Color(0xFF0EA5E9), Color(0xFF6366F1)],
-    'ielts-exams': [Color(0xFF34D399), Color(0xFF0EA5E9)],
-    'daily-english': [Color(0xFFFBBF24), Color(0xFFF97316)],
-    'debate-club': [Color(0xFFF472B6), Color(0xFFA855F7)],
-    'wins-reports': [Color(0xFF6366F1), Color(0xFFA855F7)],
-  };
-  return LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: map[slug] ?? const [Color(0xFF6366F1), Color(0xFFA855F7)],
-  );
-}
+/// Each room keeps a signature color + tint through the app (design §07:
+/// tinted tiles with display letters), like coaches do.
+(Color, Color) communityStyle(String slug) => switch (slug) {
+      'daily-english' => (Tokens.goldText, Tokens.goldTint),
+      'interview-prep' => (Tokens.clay, Tokens.clayTint),
+      'ielts-exams' => (Tokens.teal, Tokens.tealTint),
+      'debate-club' => (Tokens.ink, Tokens.inkSoft),
+      'wins-reports' => (Tokens.teal, Tokens.tealTint),
+      _ => (Tokens.clay, Tokens.clayTint),
+    };
 
 /// The Community tab: category rooms to join and chat in (Phase 1 of the
 /// community platform — text spaces; group calls come later).
@@ -164,14 +159,11 @@ class CommunityScreenState extends State<CommunityScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(24, 14, 24, 20),
             children: [
-              const Text(
-                'Community',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 2),
+              Text('Community', style: Type.display(30)),
+              const SizedBox(height: 5),
               const Text(
                 'Learners like you, practicing out loud.',
-                style: TextStyle(fontSize: 13, color: Tokens.muted),
+                style: TextStyle(fontSize: 13, color: Tokens.ink60),
               ),
               const SizedBox(height: 18),
               if (_loading)
@@ -193,6 +185,7 @@ class CommunityScreenState extends State<CommunityScreen> {
   Widget _roomCard(Community c) {
     final joined = _joined.contains(c.id);
     final count = _counts[c.id] ?? 0;
+    final (color, tint) = communityStyle(c.slug);
     return GestureDetector(
       onTap: () => _open(c),
       child: Container(
@@ -200,20 +193,20 @@ class CommunityScreenState extends State<CommunityScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Tokens.card,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Tokens.line),
         ),
         child: Row(
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: 44,
+              height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                gradient: communityGradient(c.slug),
+                color: tint,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Text(c.emoji, style: const TextStyle(fontSize: 22)),
+              child: Text(c.name[0], style: Type.display(20, color: color)),
             ),
             const SizedBox(width: 12),
             Expanded(

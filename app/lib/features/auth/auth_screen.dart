@@ -96,17 +96,13 @@ class _AuthScreenState extends State<AuthScreen> {
                         color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Fluenix',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-                  ),
+                  Text('Fluenix', style: Type.display(26)),
                 ],
               ),
               const SizedBox(height: 28),
               Text(
                 _signUp ? 'Create your account' : 'Welcome back',
-                style:
-                    const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+                style: Type.display(30),
               ),
               const SizedBox(height: 6),
               const Text(

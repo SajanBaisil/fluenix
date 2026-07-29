@@ -114,11 +114,13 @@ class ProgressScreenState extends State<ProgressScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 20),
       children: [
-        const Text(
-          'Progress',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+        Text('Progress', style: Type.display(30)),
+        const SizedBox(height: 5),
+        Text(
+          "${_reports.length} calls in. Here's the shape of it.",
+          style: const TextStyle(fontSize: 13, color: Tokens.ink60),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -140,11 +142,12 @@ class ProgressScreenState extends State<ProgressScreen> {
                   ),
                   if (delta != null)
                     Text(
-                      '${delta >= 0 ? '▲' : '▼'} ${delta.abs()}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: delta >= 0 ? Tokens.mint : Tokens.rose,
+                      '${delta >= 0 ? '↑' : '↓'} ${delta.abs()}',
+                      style: Type.mono(
+                        11,
+                        weight: FontWeight.w700,
+                        color: delta >= 0 ? Tokens.teal : Tokens.clay,
+                        ls: 0,
                       ),
                     ),
                 ],
@@ -214,21 +217,16 @@ class ProgressScreenState extends State<ProgressScreen> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: isToday && active ? Tokens.ringGradient : null,
                     color: isToday && active
-                        ? null
+                        ? Tokens.clay
                         : active
-                            ? Tokens.indigo.withValues(alpha: 0.2)
-                            : Tokens.cardHi,
-                    border: active && !isToday
-                        ? Border.all(
-                            color: Tokens.indigo.withValues(alpha: 0.5))
-                        : Border.all(color: Tokens.line),
+                            ? Tokens.claySoft
+                            : Tokens.track,
                   ),
                   child: active
                       ? Icon(Icons.check_rounded,
                           size: 16,
-                          color: isToday ? Colors.white : Tokens.indigoSoft)
+                          color: isToday ? Colors.white : Tokens.clay)
                       : null,
                 ),
                 const SizedBox(height: 6),
@@ -270,19 +268,16 @@ class ProgressScreenState extends State<ProgressScreen> {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(
-                  '${v ?? '—'}',
-                  style: const TextStyle(
-                      fontSize: 21, fontWeight: FontWeight.w800),
-                ),
+                Text('${v ?? '—'}', style: Type.display(24)),
                 if (delta != null && delta != 0) ...[
                   const SizedBox(width: 6),
                   Text(
-                    '${delta > 0 ? '▲' : '▼'}${delta.abs()}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: improved! ? Tokens.mint : Tokens.rose,
+                    '${delta > 0 ? '↑' : '↓'} ${delta.abs()}',
+                    style: Type.mono(
+                      10.5,
+                      weight: FontWeight.w700,
+                      color: improved! ? Tokens.teal : Tokens.clay,
+                      ls: 0,
                     ),
                   ),
                 ],
@@ -301,15 +296,7 @@ class ProgressScreenState extends State<ProgressScreen> {
 
   Widget _sectionLabel(String text) => Padding(
         padding: const EdgeInsets.only(top: 22, bottom: 10),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.3,
-            color: Tokens.faint,
-          ),
-        ),
+        child: Text(text, style: Type.mono(10, color: Tokens.ink50, ls: 1.4)),
       );
 }
 
@@ -325,9 +312,9 @@ class _TrendPainter extends CustomPainter {
     final w = size.width - padL, h = size.height - padB - padT;
 
     final grid = Paint()
-      ..color = const Color(0x248B92B4)
+      ..color = Tokens.track
       ..strokeWidth = 1;
-    final labelStyle = const TextStyle(fontSize: 9, color: Tokens.faint);
+    final labelStyle = const TextStyle(fontSize: 9, color: Tokens.ink35);
     for (final y in [40, 60, 80]) {
       final dy = padT + h * (1 - y / 100);
       canvas.drawLine(Offset(padL, dy), Offset(size.width, dy), grid);
@@ -363,7 +350,7 @@ class _TrendPainter extends CustomPainter {
           ..shader = const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0x476366F1), Color(0x006366F1)],
+            colors: [Color(0x3DC9502B), Color(0x00C9502B)],
           ).createShader(Rect.fromLTWH(0, padT, size.width, h)),
       );
       canvas.drawPath(

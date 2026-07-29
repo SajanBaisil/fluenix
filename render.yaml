@@ -1,0 +1,27 @@
+# Render Blueprint: deploys the FastAPI backend on the free tier.
+# Setup: render.com → New + → Blueprint → pick this repo → paste the four
+# env values when prompted (they live in backend/.env locally).
+#
+# Free-tier note: the instance spins down after ~15 min idle (cold start
+# ≈ 1 min). .github/workflows/keepalive.yml pings /healthz to keep it warm.
+services:
+  - type: web
+    name: fluenix-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

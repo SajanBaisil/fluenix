@@ -108,12 +108,16 @@ class GeminiLiveSession implements VoiceSession {
           // analysis pipeline (PLAN.md §6).
           'inputAudioTranscription': <String, Object>{},
           'outputAudioTranscription': <String, Object>{},
-          // Make voice activity detection less trigger-happy: a learner's
-          // thinking pauses shouldn't end their turn, and background noise
-          // shouldn't start one.
+          // Patient on turn-endings (a learner's thinking pauses shouldn't
+          // end their turn), eager on turn-starts (interrupting the coach
+          // should feel instant).
           'realtimeInputConfig': {
             'automaticActivityDetection': {
-              'startOfSpeechSensitivity': 'START_SENSITIVITY_LOW',
+              // HIGH start: barge-in should trigger the moment the learner
+              // starts talking over the coach. Echo no longer reaches the
+              // model (voice-call playback path + hardware AEC), which is
+              // what LOW was defending against.
+              'startOfSpeechSensitivity': 'START_SENSITIVITY_HIGH',
               'endOfSpeechSensitivity': 'END_SENSITIVITY_LOW',
               'silenceDurationMs': 900,
             },

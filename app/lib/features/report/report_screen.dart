@@ -126,6 +126,11 @@ class _ReportScreenState extends State<ReportScreen> {
     final vocab = (r['vocab_suggestions'] as List?) ?? [];
     final fillers = (r['filler_words'] as Map?)?.cast<String, dynamic>() ?? {};
     final focus = (r['focus_points'] as List?) ?? [];
+    final metrics = (r['metrics'] as Map?)?.cast<String, dynamic>() ?? {};
+    final hinglish =
+        ((r['hinglish'] as Map?)?.cast<String, dynamic>() ?? {})['examples']
+                as List? ??
+            [];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 10, 24, 28),
@@ -168,6 +173,10 @@ class _ReportScreenState extends State<ReportScreen> {
             _statTile('Fillers', fillers['count'], isScore: false),
           ],
         ),
+        if (metrics['talk_share_pct'] != null) ...[
+          _section('AIRTIME'),
+          _card(_airtime(metrics)),
+        ],
         if (issues.isNotEmpty) ...[
           _section('FIX THESE FIRST'),
           _card(
@@ -189,6 +198,19 @@ class _ReportScreenState extends State<ReportScreen> {
                 for (final (i, v) in vocab.indexed) ...[
                   if (i > 0) const Divider(height: 18, color: Tokens.line),
                   _vocabRow((v as Map).cast<String, dynamic>()),
+                ],
+              ],
+            ),
+          ),
+        ],
+        if (hinglish.isNotEmpty) ...[
+          _section('SAY IT IN ENGLISH'),
+          _card(
+            Column(
+              children: [
+                for (final (i, h) in hinglish.indexed) ...[
+                  if (i > 0) const Divider(height: 20, color: Tokens.line),
+                  _hinglishRow((h as Map).cast<String, dynamic>()),
                 ],
               ],
             ),
@@ -380,6 +402,99 @@ class _ReportScreenState extends State<ReportScreen> {
             style: const TextStyle(
                 fontSize: 11.5, color: Tokens.faint, height: 1.5),
           ),
+        ),
+      ],
+    );
+  }
+
+  /// Talk-share bar + pace line, from the deterministic call metrics.
+  Widget _airtime(Map<String, dynamic> m) {
+    final share =
+        ((m['talk_share_pct'] as num?)?.toInt() ?? 0).clamp(0, 100);
+    final wpm = (m['wpm'] as num?)?.toInt();
+    final pace = wpm == null
+        ? ''
+        : switch (wpm) {
+            < 90 => 'steady pace',
+            <= 150 => 'natural pace',
+            _ => 'quick — slow down a touch',
+          };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: SizedBox(
+            height: 8,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: share.clamp(3, 97),
+                  child: const ColoredBox(color: Tokens.indigo),
+                ),
+                Expanded(
+                  flex: (100 - share).clamp(3, 97),
+                  child: const ColoredBox(color: Color(0x1F94A3FF)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'You spoke $share% of the call',
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            if (wpm != null)
+              Text(
+                '$wpm wpm · $pace',
+                style:
+                    const TextStyle(fontSize: 12, color: Tokens.muted),
+              ),
+          ],
+        ),
+        if (share < 40) ...[
+          const SizedBox(height: 6),
+          const Text(
+            'Try longer answers — aim for about half the airtime.',
+            style: TextStyle(fontSize: 11.5, color: Tokens.faint),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// A Hinglish moment → the natural English version.
+  Widget _hinglishRow(Map<String, dynamic> h) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '"${h['said'] ?? ''}"',
+          style: const TextStyle(
+            color: Tokens.muted,
+            fontSize: 13.5,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('→ ',
+                style: TextStyle(color: Tokens.faint, fontSize: 13.5)),
+            Expanded(
+              child: Text(
+                h['english'] ?? '',
+                style: const TextStyle(
+                    fontSize: 13.5, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
         ),
       ],
     );

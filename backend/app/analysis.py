@@ -32,6 +32,12 @@ Rules:
   in the learner's turns, and list which ones they used.
 - focus_points: exactly 2-3 short imperative phrases for the next call,
   e.g. "Use past tense for finished actions".
+- hinglish: moments where the learner switched into Hindi or Hinglish
+  ("matlab", "haan", "yaar", "kya bolte hain", whole Hindi clauses). Count
+  the switches and give up to 3 examples: "said" quotes the mixed sentence
+  verbatim, "english" is how the whole thought sounds in natural English.
+  Established Indian English ("prepone", "do the needful") is NOT Hinglish.
+  If they never switched, count 0 with no examples.
 - Scores 0-100. Calibrate: 40-60 beginner, 60-75 improving, 75-85 good,
   85+ near-fluent. overall is a weighted feel, not an average.
 - If the learner spoke very little, score what you can and say so in
@@ -54,6 +60,7 @@ _SCHEMA = {
         "focus_points",
         "headline",
         "memory",
+        "hinglish",
     ],
     "properties": {
         "overall": {"type": "INTEGER"},
@@ -104,6 +111,24 @@ _SCHEMA = {
             },
         },
         "focus_points": {"type": "ARRAY", "items": {"type": "STRING"}},
+        "hinglish": {
+            "type": "OBJECT",
+            "required": ["count", "examples"],
+            "properties": {
+                "count": {"type": "INTEGER"},
+                "examples": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "required": ["said", "english"],
+                        "properties": {
+                            "said": {"type": "STRING"},
+                            "english": {"type": "STRING"},
+                        },
+                    },
+                },
+            },
+        },
         "memory": {
             "type": "STRING",
             "description": "Third-person notes for the coach before the next "
@@ -160,10 +185,39 @@ def _clamp(v: Any, lo: int = 0, hi: int = 100) -> int:
         return lo
 
 
+def compute_metrics(turns: list[dict[str, Any]]) -> dict[str, Any]:
+    """Talk-time and pace, computed deterministically from turn timestamps.
+
+    Timestamps come from when transcription fragments reached the app, so
+    they track speech loosely; per-turn floors (max realistic speaking rate)
+    keep a burst of late fragments from reading as impossibly fast speech.
+    """
+    user_ms = coach_ms = user_words = 0
+    for t in turns:
+        dur = max(0, int(t.get("t_end_ms") or 0) - int(t.get("t_start_ms") or 0))
+        words = len((t.get("text") or "").split())
+        if t.get("role") == "user":
+            user_words += words
+            user_ms += max(dur, int(words / 3.3 * 1000))  # ≤ ~200 wpm
+        else:
+            coach_ms += max(dur, int(words / 2.5 * 1000))  # TTS ≈ 150 wpm
+    total = user_ms + coach_ms
+    if total == 0 or user_words == 0:
+        return {}
+    return {
+        "user_talk_seconds": round(user_ms / 1000),
+        "coach_talk_seconds": round(coach_ms / 1000),
+        "talk_share_pct": round(user_ms * 100 / total),
+        "wpm": _clamp(round(user_words / (user_ms / 60000)), 40, 220),
+        "user_words": user_words,
+    }
+
+
 async def analyze_transcript(turns: list[dict[str, Any]]) -> dict[str, Any]:
     """Returns a dict shaped for the `reports` table (minus call_id)."""
     report = await _call_model(_format_transcript(turns))
     scores = report.get("scores") or {}
+    hinglish = report.get("hinglish") or {}
     return {
         "model": settings().analysis_model,
         "overall": _clamp(report.get("overall")),
@@ -179,5 +233,40 @@ async def analyze_transcript(turns: list[dict[str, Any]]) -> dict[str, Any]:
         "filler_words": report.get("filler_words")
         or {"count": 0, "words": []},
         "focus_points": (report.get("focus_points") or [])[:3],
+        "hinglish": {
+            "count": _clamp(hinglish.get("count"), 0, 99),
+            "examples": (hinglish.get("examples") or [])[:3],
+        },
+        "metrics": compute_metrics(turns),
         "memory": str(report.get("memory") or "")[:600],
     }
+
+
+async def week_line(stats: dict[str, Any]) -> str:
+    """One warm coach-voice sentence about the learner's week; '' on failure."""
+    prompt = (
+        "You are the learner's English-speaking coach. Write exactly ONE "
+        "warm, specific sentence (max 25 words) summarizing their week of "
+        "practice, speaking directly to them as 'you'. Mention the most "
+        "notable number or trend. No emoji, no greeting, no quotes.\n"
+        f"Their week: {json.dumps(stats)}"
+    )
+    body = {
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        # No maxOutputTokens: the model thinks before answering and the
+        # thinking spends from the same budget — a cap truncates the sentence.
+        "generationConfig": {"temperature": 0.6},
+    }
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(
+                f"{_BASE}/v1beta/{settings().analysis_model}:generateContent",
+                params={"key": settings().gemini_api_key},
+                json=body,
+            )
+        if resp.status_code != 200:
+            return ""
+        text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+        return " ".join(text.split()).strip()[:200]
+    except Exception:  # noqa: BLE001 — the card just falls back to stats
+        return ""

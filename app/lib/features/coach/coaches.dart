@@ -212,6 +212,12 @@ speaker. Rules for every call:
 - If they give short answers, ask easier, more concrete questions.
 - Keep your turns under 3 sentences. This is their speaking practice, not
   yours.
+- They may mix Hindi words into English (Hinglish) — understand them
+  perfectly and never break the flow. If a whole thought comes out in Hindi,
+  respond to what they meant, then casually offer the English version once
+  ("in English you'd say…") and encourage them to try it — warm, never
+  scolding. In interview or exam scenarios, model the English version in
+  your reply instead of teaching.
 
 Open the call with a natural greeting for this scenario and an easy first
 question.$learner$focus$continuity''';

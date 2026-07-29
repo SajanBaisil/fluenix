@@ -54,6 +54,11 @@ class _CallScreenState extends State<CallScreen> {
   final List<TranscriptTurn> _turns = [];
   String _fragRole = '';
   final StringBuffer _frag = StringBuffer();
+  // Fragment arrival times approximate when each turn was actually spoken —
+  // the backend turns them into talk-time and pace metrics.
+  final Stopwatch _clock = Stopwatch()..start();
+  int _fragStartMs = 0;
+  int _fragEndMs = 0;
 
   @override
   void initState() {
@@ -132,17 +137,22 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   void _addFragment(String role, String text) {
-    if (role != _fragRole && _frag.isNotEmpty) {
-      _turns.add(TranscriptTurn(role: _fragRole, text: _frag.toString().trim()));
-      _frag.clear();
-    }
+    final now = _clock.elapsedMilliseconds;
+    if (role != _fragRole && _frag.isNotEmpty) _flushFragment();
+    if (_frag.isEmpty) _fragStartMs = now;
     _fragRole = role;
     _frag.write(text);
+    _fragEndMs = now;
   }
 
   void _flushFragment() {
     if (_frag.isNotEmpty) {
-      _turns.add(TranscriptTurn(role: _fragRole, text: _frag.toString().trim()));
+      _turns.add(TranscriptTurn(
+        role: _fragRole,
+        text: _frag.toString().trim(),
+        tStartMs: _fragStartMs,
+        tEndMs: _fragEndMs,
+      ));
       _frag.clear();
     }
   }

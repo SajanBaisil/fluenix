@@ -29,7 +29,10 @@ abstract final class Config {
   /// barge-in (no acoustic echo path), loudspeaker gates the mic while the
   /// coach speaks (half-duplex) unless this flag says otherwise.
   ///
-  /// Set true to trust the hardware echo canceller on loudspeaker too —
-  /// works on many phones now that playback uses the voice-call path.
-  static const speakerFullDuplex = false;
+  /// True: trust the hardware echo canceller on loudspeaker too, so you can
+  /// interrupt the coach mid-sentence on speaker like a normal call. Playback
+  /// goes through the voice-call path (USAGE_VOICE_COMMUNICATION) which feeds
+  /// the AEC reference — if the coach starts answering itself on speaker,
+  /// flip this back to false.
+  static const speakerFullDuplex = true;
 }

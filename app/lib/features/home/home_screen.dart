@@ -27,6 +27,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<String> _workingOn = const [];
   Coach _coach = coaches[1];
   TimeOfDay? _reminderTime;
+  WeekSummary? _week;
 
   bool get _hasBackend =>
       Config.supabaseUrl.isNotEmpty && Config.backendUrl.isNotEmpty;
@@ -58,6 +59,17 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (mounted) setState(() {});
     unawaited(_loadLimits());
     unawaited(_loadFocus());
+    unawaited(_loadWeek());
+  }
+
+  Future<void> _loadWeek() async {
+    if (!_hasBackend) return;
+    try {
+      final week = await Api.week();
+      if (mounted) setState(() => _week = week);
+    } catch (_) {
+      // The card is progressive enhancement — fail silently.
+    }
   }
 
   Future<void> _loadLimits() async {
@@ -118,7 +130,11 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
         )
-        .then((_) => refresh());
+        .then((_) {
+      // A finished call changes the week's numbers — bypass the cache.
+      Api.invalidateWeek();
+      refresh();
+    });
   }
 
   /// Pick (or clear) the daily "coach calls you" time.
@@ -409,6 +425,46 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ],
               ),
             ],
+            if (_week case final WeekSummary w when !w.isEmpty) ...[
+              _sectionLabel('YOUR WEEK'),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Tokens.card,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Tokens.line),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _weekStat('${w.calls}', 'calls'),
+                        _weekStat('${w.minutes}', 'minutes'),
+                        _weekStat(
+                          w.avgOverall?.toString() ?? '—',
+                          'avg score',
+                          delta: w.deltaOverall,
+                        ),
+                        _weekStat('${w.activeDays}/7', 'days'),
+                      ],
+                    ),
+                    if (w.line.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        w.line,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          color: Tokens.muted,
+                          fontStyle: FontStyle.italic,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             _sectionLabel('JUMP INTO A SCENARIO'),
             GridView.count(
               crossAxisCount: 2,
@@ -459,6 +515,43 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _weekStat(String value, String label, {int? delta}) {
+    return Expanded(
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              if (delta != null && delta != 0) ...[
+                const SizedBox(width: 3),
+                Text(
+                  '${delta > 0 ? '▲' : '▼'}${delta.abs()}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: delta > 0 ? Tokens.mint : Tokens.rose,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10.5, color: Tokens.muted),
+          ),
+        ],
       ),
     );
   }

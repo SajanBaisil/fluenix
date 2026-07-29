@@ -57,11 +57,49 @@ class Limits {
 }
 
 class TranscriptTurn {
-  const TranscriptTurn({required this.role, required this.text});
+  const TranscriptTurn({
+    required this.role,
+    required this.text,
+    this.tStartMs = 0,
+    this.tEndMs = 0,
+  });
   final String role; // 'user' | 'assistant'
   final String text;
 
-  Map<String, Object> toJson() => {'role': role, 'text': text};
+  /// Milliseconds since call start — the backend derives talk-time and
+  /// pace metrics from these.
+  final int tStartMs;
+  final int tEndMs;
+
+  Map<String, Object> toJson() => {
+        'role': role,
+        'text': text,
+        't_start_ms': tStartMs,
+        't_end_ms': tEndMs,
+      };
+}
+
+/// GET /v1/me/week — the Home screen's "Your week" card.
+class WeekSummary {
+  const WeekSummary({
+    required this.calls,
+    required this.minutes,
+    required this.activeDays,
+    required this.avgOverall,
+    required this.deltaOverall,
+    required this.topFocus,
+    required this.line,
+  });
+
+  final int calls;
+  final int minutes;
+  final int activeDays;
+  final int? avgOverall;
+  final int? deltaOverall;
+  final String topFocus;
+  final String line;
+
+  bool get isEmpty => calls == 0;
 }
 
 class PracticeExercise {
@@ -177,6 +215,45 @@ abstract final class Api {
       memory: (data['memory'] as String?) ?? '',
       lastCallDaysAgo: data['last_call_days_ago'] as int?,
     );
+  }
+
+  // Cached so tab switches don't re-trigger the backend's summary-line
+  // generation; a finished call invalidates it via [invalidateWeek].
+  static WeekSummary? _weekCache;
+  static DateTime? _weekCacheAt;
+
+  static void invalidateWeek() {
+    _weekCache = null;
+    _weekCacheAt = null;
+  }
+
+  static Future<WeekSummary> week() async {
+    final cached = _weekCache;
+    if (cached != null &&
+        _weekCacheAt != null &&
+        DateTime.now().difference(_weekCacheAt!) <
+            const Duration(minutes: 30)) {
+      return cached;
+    }
+    final resp = await _getWithRefresh(_u('/v1/me/week'))
+        .timeout(const Duration(seconds: 30));
+    if (resp.statusCode != 200) {
+      debugPrint('api: week ${resp.statusCode}');
+      throw ApiException('week failed: ${resp.statusCode}');
+    }
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    final week = WeekSummary(
+      calls: (data['calls'] as num?)?.toInt() ?? 0,
+      minutes: (data['minutes'] as num?)?.toInt() ?? 0,
+      activeDays: (data['active_days'] as num?)?.toInt() ?? 0,
+      avgOverall: (data['avg_overall'] as num?)?.toInt(),
+      deltaOverall: (data['delta_overall'] as num?)?.toInt(),
+      topFocus: (data['top_focus'] as String?) ?? '',
+      line: (data['line'] as String?) ?? '',
+    );
+    _weekCache = week;
+    _weekCacheAt = DateTime.now();
+    return week;
   }
 
   static Future<PracticePack> practice() async {

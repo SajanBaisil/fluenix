@@ -1,5 +1,6 @@
 import logging
-from datetime import UTC, date, datetime
+from collections import Counter
+from datetime import UTC, date, datetime, timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -240,6 +241,83 @@ async def _bump_daily_rollup(user_id: str, duration_s: int) -> None:
         },
         on_conflict="user_id,date",
     )
+
+
+# ─────────────────────────────────────────────────────────────
+# GET /v1/me/week — the home screen's "Your week" card
+# ─────────────────────────────────────────────────────────────
+@router.get("/me/week")
+async def my_week(user_id: UserId) -> dict[str, Any]:
+    now = datetime.now(UTC)
+    week_ago = now - timedelta(days=7)
+
+    progress = await supa.select(
+        "user_progress",
+        filters={
+            "user_id": f"eq.{user_id}",
+            "date": f"gte.{(now - timedelta(days=7)).date().isoformat()}",
+        },
+    )
+    calls = sum(int(p.get("calls") or 0) for p in progress)
+    minutes = sum(int(p.get("minutes") or 0) for p in progress)
+    active_days = sum(1 for p in progress if (p.get("calls") or 0) > 0)
+
+    # Two weeks of reports: this week's average vs the week before.
+    reports = await supa.select(
+        "reports",
+        columns="overall,focus_points,created_at,calls!inner(user_id)",
+        filters={
+            "calls.user_id": f"eq.{user_id}",
+            "created_at": f"gte.{(now - timedelta(days=14)).isoformat()}",
+            "order": "created_at.desc",
+            "limit": "60",
+        },
+    )
+    this_week = [
+        r for r in reports if datetime.fromisoformat(r["created_at"]) >= week_ago
+    ]
+    prev_week = [
+        r for r in reports if datetime.fromisoformat(r["created_at"]) < week_ago
+    ]
+
+    def avg(rows: list[dict[str, Any]]) -> int | None:
+        vals = [int(r["overall"]) for r in rows if r.get("overall") is not None]
+        return round(sum(vals) / len(vals)) if vals else None
+
+    avg_overall = avg(this_week)
+    prev_avg = avg(prev_week)
+    delta = (
+        avg_overall - prev_avg
+        if avg_overall is not None and prev_avg is not None
+        else None
+    )
+    focus_counts = Counter(
+        str(f) for r in this_week for f in (r.get("focus_points") or [])
+    )
+    top_focus = focus_counts.most_common(1)[0][0] if focus_counts else ""
+
+    line = ""
+    if calls > 0:
+        line = await analysis.week_line(
+            {
+                "calls": calls,
+                "minutes_practiced": minutes,
+                "days_active_of_7": active_days,
+                "average_score": avg_overall,
+                "score_change_vs_last_week": delta,
+                "most_repeated_focus_point": top_focus or None,
+            }
+        )
+
+    return {
+        "calls": calls,
+        "minutes": minutes,
+        "active_days": active_days,
+        "avg_overall": avg_overall,
+        "delta_overall": delta,
+        "top_focus": top_focus,
+        "line": line,
+    }
 
 
 # ─────────────────────────────────────────────────────────────

@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping /healthz
-        run: curl -fsS --max-time 30 https://fluenix-api.onrender.com/healthz || true
+        run: curl -fsS --max-time 30 https://fluenix.onrender.com/healthz || true

@@ -6,6 +6,7 @@ Gemini Flash (free tier); swapping to Claude later means changing only
 `_call_model`.
 """
 
+import asyncio
 import json
 from typing import Any
 
@@ -14,6 +15,51 @@ import httpx
 from .config import settings
 
 _BASE = "https://generativelanguage.googleapis.com"
+
+# The preview model intermittently 503s ("high demand") and sometimes hangs;
+# retry those, fail fast on real errors (400s besides 429).
+_RETRIABLE = {429, 500, 503, 504}
+
+
+async def _generate_with(
+    model: str, body: dict[str, Any], *, timeout: float, attempts: int
+) -> dict[str, Any]:
+    last: Exception = AnalysisError("no attempts made")
+    for i in range(attempts):
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                resp = await client.post(
+                    f"{_BASE}/v1beta/{model}:generateContent",
+                    params={"key": settings().gemini_api_key},
+                    json=body,
+                )
+            if resp.status_code == 200:
+                return resp.json()
+            last = AnalysisError(f"{resp.status_code}: {resp.text[:300]}")
+            if resp.status_code not in _RETRIABLE:
+                break
+        except httpx.HTTPError as e:
+            last = AnalysisError(f"network: {e!r}")
+        if i < attempts - 1:
+            await asyncio.sleep(2.0 * (i + 1))
+    raise last
+
+
+async def _generate(
+    body: dict[str, Any], *, timeout: float = 60, attempts: int = 3
+) -> dict[str, Any]:
+    try:
+        return await _generate_with(
+            settings().analysis_model, body, timeout=timeout, attempts=attempts
+        )
+    except AnalysisError as e:
+        # Quota exhausted or model retired → the fallback's separate quota
+        # bucket keeps reports landing.
+        if not str(e).startswith(("429", "404")):
+            raise
+        return await _generate_with(
+            settings().analysis_fallback_model, body, timeout=timeout, attempts=2
+        )
 
 _SYSTEM = """You are an expert English-speaking coach reviewing a phone-call
 transcript between a learner (role "user") and an AI coach (role "assistant").
@@ -142,6 +188,18 @@ class AnalysisError(Exception):
     pass
 
 
+def _candidate_text(data: dict[str, Any]) -> str:
+    """Concatenated text parts of the first candidate.
+
+    Thinking models may emit thought parts before (or instead of) the text
+    part, so grabbing parts[0]["text"] blindly is flaky.
+    """
+    parts = data["candidates"][0]["content"]["parts"]
+    return "".join(
+        p.get("text", "") for p in parts if p.get("text") and not p.get("thought")
+    )
+
+
 def _format_transcript(turns: list[dict[str, Any]]) -> str:
     lines = []
     for t in turns:
@@ -162,18 +220,9 @@ async def _call_model(transcript: str) -> dict[str, Any]:
             "temperature": 0.3,
         },
     }
-    async with httpx.AsyncClient(timeout=60) as client:
-        resp = await client.post(
-            f"{_BASE}/v1beta/{settings().analysis_model}:generateContent",
-            params={"key": settings().gemini_api_key},
-            json=body,
-        )
-    if resp.status_code != 200:
-        raise AnalysisError(f"{resp.status_code}: {resp.text[:300]}")
-    data = resp.json()
+    data = await _generate(body)
     try:
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
-        return json.loads(text)
+        return json.loads(_candidate_text(data))
     except (KeyError, IndexError, json.JSONDecodeError) as e:
         raise AnalysisError(f"bad model output: {e}") from e
 
@@ -258,15 +307,7 @@ async def week_line(stats: dict[str, Any]) -> str:
         "generationConfig": {"temperature": 0.6},
     }
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
-            resp = await client.post(
-                f"{_BASE}/v1beta/{settings().analysis_model}:generateContent",
-                params={"key": settings().gemini_api_key},
-                json=body,
-            )
-        if resp.status_code != 200:
-            return ""
-        text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+        text = _candidate_text(await _generate(body, timeout=25, attempts=2))
         return " ".join(text.split()).strip()[:200]
     except Exception:  # noqa: BLE001 — the card just falls back to stats
         return ""

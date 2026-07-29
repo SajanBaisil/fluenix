@@ -17,7 +17,11 @@ class Settings(BaseSettings):
     gemini_api_key: str
     live_model: str = "models/gemini-3.1-flash-live-preview"
     # Post-call analysis (text). Provider-neutral seam: see analysis.py.
-    analysis_model: str = "models/gemini-3-flash-preview"
+    # Stable flash (preview models share flakier, tighter free quotas).
+    analysis_model: str = "models/gemini-3.6-flash"
+    # Used when the primary is quota-exhausted or retired (429/404) —
+    # separate free-tier quota bucket, so reports keep landing.
+    analysis_fallback_model: str = "models/gemini-3.5-flash-lite"
 
     # Metering (seconds per day, IST day boundary — see call_seconds_today())
     free_daily_seconds: int = 300  # 5 min/day (PLAN.md §7 free tier)

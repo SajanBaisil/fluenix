@@ -80,5 +80,10 @@ goFluent/Speexx sell to global L&D at global prices with human-coach cost struct
 |---|---|---|
 | 1 | Practice section (mistakes → drills → next call) | ✅ shipped |
 | 2 | Onboarding (level/goal → calibrated coaching from call one) | ✅ shipped |
-| 3 | Paywall + RevenueCat (B2C revenue) | next — needs Play Console + RevenueCat accounts |
-| 4 | Store prep: SMTP + email confirm, privacy policy, listing assets | after paywall |
+| 3 | Tier-1 sprint: AI calls you, live captions, JD interview mode | ✅ shipped |
+| 4 | Feedback-loop sprint: Hinglish coaching, airtime/pace, weekly summary | ✅ shipped |
+| 5 | Community Phase 1: category rooms, realtime chat, report sharing, moderation | ✅ shipped |
+| 6 | Community Phase 2: group calls between users (LiveKit) + per-person reports | waiting on Phase 1 traction |
+| 7 | Practice revamp: scored multiple-choice drills, spaced repetition, listening drills | next sprint candidate |
+| 8 | Paywall + RevenueCat (B2C revenue) | needs Play Console + RevenueCat accounts |
+| 9 | Store prep: SMTP + email confirm, privacy policy, listing assets | after paywall |

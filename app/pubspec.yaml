@@ -36,13 +36,14 @@ flutter_launcher_icons:
   adaptive_icon_foreground: assets/brand/icon_fg.png
   remove_alpha_ios: true
 
-# Launch screen (cream, centered mark). Regenerate:
+# Launch screen (ink, centered waveform — hands off seamlessly to the
+# animated in-app splash). Regenerate:
 #   dart run flutter_native_splash:create
 flutter_native_splash:
-  color: "#F6F1E8"
+  color: "#14110F"
   image: assets/brand/splash.png
   android_12:
-    color: "#F6F1E8"
+    color: "#14110F"
     image: assets/brand/splash.png
 
 flutter:

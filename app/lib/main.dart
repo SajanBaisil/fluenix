@@ -11,6 +11,7 @@ import 'features/home/home_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/practice/practice_screen.dart';
 import 'features/progress/progress_screen.dart';
+import 'features/splash/splash_screen.dart';
 import 'services/profile.dart';
 import 'services/reminders.dart';
 import 'theme/app_theme.dart';
@@ -51,8 +52,12 @@ class FluenixApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       theme: buildFluenixTheme(),
       // Without Supabase config the app still runs in pure-dev mode
-      // (direct Gemini key, no auth, no metering).
-      home: Config.supabaseUrl.isEmpty ? const HomeShell() : const _AuthGate(),
+      // (direct Gemini key, no auth, no metering). Boot happens under the
+      // animated splash, which fades out when its loader completes.
+      home: SplashGate(
+        child:
+            Config.supabaseUrl.isEmpty ? const HomeShell() : const _AuthGate(),
+      ),
     );
   }
 }

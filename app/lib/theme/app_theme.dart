@@ -63,17 +63,18 @@ abstract final class Tokens {
   );
 }
 
-/// The three design families. Display = Newsreader (serif, weight 400,
-/// tight leading), UI = Schibsted Grotesk (theme default), labels/numeric =
-/// IBM Plex Mono (uppercase eyebrows — callers pass uppercased strings).
+/// One family app-wide: Plus Jakarta Sans — simple, friendly, clear
+/// numerals. Hierarchy comes from weight, not from mixing families.
+/// The helper names are roles, not fonts: `display` = big headline/number,
+/// `mono` = small uppercase label (tracked caps + tabular figures).
 abstract final class Type {
   static TextStyle display(
     double size, {
     Color color = Tokens.ink,
-    double height = 1.05,
-    FontWeight weight = FontWeight.w400,
+    double height = 1.1,
+    FontWeight weight = FontWeight.w800,
   }) =>
-      GoogleFonts.newsreader(
+      GoogleFonts.plusJakartaSans(
         fontSize: size,
         height: height,
         color: color,
@@ -83,14 +84,15 @@ abstract final class Type {
   static TextStyle mono(
     double size, {
     Color color = Tokens.ink50,
-    FontWeight weight = FontWeight.w600,
+    FontWeight weight = FontWeight.w700,
     double ls = 1.2,
   }) =>
-      GoogleFonts.ibmPlexMono(
+      GoogleFonts.plusJakartaSans(
         fontSize: size,
         color: color,
         fontWeight: weight,
         letterSpacing: ls,
+        fontFeatures: const [FontFeature.tabularFigures()],
       );
 }
 
@@ -108,7 +110,7 @@ ThemeData buildFluenixTheme() {
     ),
   );
 
-  final text = GoogleFonts.schibstedGroteskTextTheme(base.textTheme).apply(
+  final text = GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
     bodyColor: Tokens.ink,
     displayColor: Tokens.ink,
   );
@@ -137,7 +139,7 @@ ThemeData buildFluenixTheme() {
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: Tokens.ink,
-      contentTextStyle: GoogleFonts.schibstedGrotesk(
+      contentTextStyle: GoogleFonts.plusJakartaSans(
         color: Tokens.cream,
         fontSize: 13,
         fontWeight: FontWeight.w600,

@@ -78,25 +78,29 @@ class PracticeScreenState extends State<PracticeScreen> {
                 ),
               )
             : _failed
-                ? _message(
-                    Icons.cloud_off_rounded,
-                    "Couldn't load practice",
-                    'Check your connection and pull to retry.',
-                    retry: true,
-                  )
-                : (pack == null || pack.isEmpty)
-                    ? _message(
-                        Icons.fitness_center_rounded,
-                        'Nothing to practice yet',
-                        'Finish a call and your mistakes become drills here.',
-                      )
-                    : _content(pack),
+            ? _message(
+                Icons.cloud_off_rounded,
+                "Couldn't load practice",
+                'Check your connection and pull to retry.',
+                retry: true,
+              )
+            : (pack == null || pack.isEmpty)
+            ? _message(
+                Icons.fitness_center_rounded,
+                'Nothing to practice yet',
+                'Finish a call and your mistakes become drills here.',
+              )
+            : _content(pack),
       ),
     );
   }
 
-  Widget _message(IconData icon, String title, String sub,
-      {bool retry = false}) {
+  Widget _message(
+    IconData icon,
+    String title,
+    String sub, {
+    bool retry = false,
+  }) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -105,19 +109,24 @@ class PracticeScreenState extends State<PracticeScreen> {
           children: [
             Icon(icon, size: 44, color: Tokens.faint),
             const SizedBox(height: 16),
-            Text(title,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w800)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 8),
-            Text(sub,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Tokens.muted, fontSize: 13)),
+            Text(
+              sub,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Tokens.muted, fontSize: 13),
+            ),
             if (retry) ...[
               const SizedBox(height: 18),
               TextButton(
                 onPressed: _regenerate,
-                child: const Text('Retry',
-                    style: TextStyle(color: Tokens.indigoSoft)),
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(color: Tokens.indigoSoft),
+                ),
               ),
             ],
           ],
@@ -138,71 +147,62 @@ class PracticeScreenState extends State<PracticeScreen> {
         ),
         const SizedBox(height: 16),
         // Teal hero (design §06)
-        ClipRRect(
-          borderRadius: BorderRadius.circular(26),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            color: Tokens.teal,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -60,
-                  right: -40,
-                  child: Container(
-                    width: 170,
-                    height: 170,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [Color(0x527BC9A8), Colors.transparent],
-                        stops: [0, 0.9],
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(26)),
+            // Mint glow top-right as the card's own radial gradient.
+            gradient: RadialGradient(
+              center: Alignment(1.2, -1.4),
+              radius: 1.5,
+              colors: [Color(0xFF327D6D), Tokens.teal],
+              stops: [0, 0.55],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'TODAY\'S DRILLS',
+                style: Type.mono(9.5, color: const Color(0xB8F6F1E8), ls: 1.6),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                'Fix it before the next call',
+                style: Type.display(24, color: Tokens.cream),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: _regenerate,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 11,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Tokens.cream,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text(
+                        'New drills',
+                        style: TextStyle(
+                          color: Tokens.teal,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('TODAY\'S DRILLS',
-                        style: Type.mono(9.5,
-                            color: const Color(0xB8F6F1E8), ls: 1.6)),
-                    const SizedBox(height: 7),
-                    Text('Fix it before the next call',
-                        style: Type.display(24, color: Tokens.cream)),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: _regenerate,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 11),
-                            decoration: BoxDecoration(
-                              color: Tokens.cream,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Text(
-                              'New drills',
-                              style: TextStyle(
-                                color: Tokens.teal,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          '${_done.length} / ${pack.exercises.length} DONE',
-                          style: Type.mono(10,
-                              color: const Color(0xB8F6F1E8), ls: 1),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${_done.length} / ${pack.exercises.length} DONE',
+                    style: Type.mono(10, color: const Color(0xB8F6F1E8), ls: 1),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         if (pack.exercises.isNotEmpty) ...[
@@ -233,22 +233,28 @@ class PracticeScreenState extends State<PracticeScreen> {
                     children: [
                       Expanded(
                         child: Text.rich(
-                          TextSpan(children: [
-                            TextSpan(
-                              text: '"${v['used'] ?? ''}"',
-                              style: const TextStyle(
-                                  color: Tokens.muted, fontSize: 13.5),
-                            ),
-                            const TextSpan(
-                                text: '  →  ',
-                                style: TextStyle(color: Tokens.faint)),
-                            TextSpan(
-                              text: '"${v['better'] ?? ''}"',
-                              style: const TextStyle(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '"${v['used'] ?? ''}"',
+                                style: const TextStyle(
+                                  color: Tokens.muted,
                                   fontSize: 13.5,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                          ]),
+                                ),
+                              ),
+                              const TextSpan(
+                                text: '  →  ',
+                                style: TextStyle(color: Tokens.faint),
+                              ),
+                              TextSpan(
+                                text: '"${v['better'] ?? ''}"',
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -271,9 +277,7 @@ class PracticeScreenState extends State<PracticeScreen> {
       decoration: BoxDecoration(
         color: Tokens.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: done ? const Color(0x730F5951) : Tokens.line,
-        ),
+        border: Border.all(color: done ? const Color(0x730F5951) : Tokens.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,8 +285,7 @@ class PracticeScreenState extends State<PracticeScreen> {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Tokens.clayTint,
                   borderRadius: BorderRadius.circular(6),
@@ -293,21 +296,31 @@ class PracticeScreenState extends State<PracticeScreen> {
                     'choose' => 'PICK ONE',
                     _ => 'UPGRADE',
                   },
-                  style: Type.mono(8.5,
-                      color: Tokens.clay, weight: FontWeight.w700, ls: 0.7),
+                  style: Type.mono(
+                    8.5,
+                    color: Tokens.clay,
+                    weight: FontWeight.w700,
+                    ls: 0.7,
+                  ),
                 ),
               ),
               const Spacer(),
               if (done)
-                const Icon(Icons.check_circle_rounded,
-                    color: Tokens.teal, size: 18),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Tokens.teal,
+                  size: 18,
+                ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             ex.prompt,
             style: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600, height: 1.5),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 12),
           if (!revealed)
@@ -335,18 +348,22 @@ class PracticeScreenState extends State<PracticeScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('✓ ',
-                    style: TextStyle(
-                        color: Tokens.teal,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800)),
+                const Text(
+                  '✓ ',
+                  style: TextStyle(
+                    color: Tokens.teal,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 Expanded(
                   child: Text(
                     ex.answer,
                     style: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        height: 1.45),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      height: 1.45,
+                    ),
                   ),
                 ),
               ],
@@ -357,7 +374,10 @@ class PracticeScreenState extends State<PracticeScreen> {
               child: Text(
                 ex.why,
                 style: const TextStyle(
-                    fontSize: 11.5, color: Tokens.faint, height: 1.5),
+                  fontSize: 11.5,
+                  color: Tokens.faint,
+                  height: 1.5,
+                ),
               ),
             ),
             if (!done) ...[
@@ -412,17 +432,17 @@ class PracticeScreenState extends State<PracticeScreen> {
   }
 
   Widget _card(Widget child) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Tokens.card,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Tokens.line),
-        ),
-        child: child,
-      );
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Tokens.card,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: Tokens.line),
+    ),
+    child: child,
+  );
 
   Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(top: 22, bottom: 10),
-        child: Text(text, style: Type.mono(10, color: Tokens.ink50, ls: 1.4)),
-      );
+    padding: const EdgeInsets.only(top: 22, bottom: 10),
+    child: Text(text, style: Type.mono(10, color: Tokens.ink50, ls: 1.4)),
+  );
 }

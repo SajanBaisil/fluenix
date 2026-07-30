@@ -64,9 +64,7 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     final report = _report;
     return Scaffold(
-      body: SafeArea(
-        child: report == null ? _waiting() : _reportView(report),
-      ),
+      body: SafeArea(child: report == null ? _waiting() : _reportView(report)),
     );
   }
 
@@ -82,7 +80,9 @@ class _ReportScreenState extends State<ReportScreen> {
               width: 52,
               height: 52,
               child: CircularProgressIndicator(
-                  strokeWidth: 3, color: Tokens.clay),
+                strokeWidth: 3,
+                color: Tokens.clay,
+              ),
             ),
             const SizedBox(height: 26),
             Text('Analyzing your call…', style: Type.display(24)),
@@ -123,8 +123,8 @@ class _ReportScreenState extends State<ReportScreen> {
     final metrics = (r['metrics'] as Map?)?.cast<String, dynamic>() ?? {};
     final hinglish =
         ((r['hinglish'] as Map?)?.cast<String, dynamic>() ?? {})['examples']
-                as List? ??
-            [];
+            as List? ??
+        [];
 
     final cefr = switch (ProfileService.current.level) {
       'beginner' => 'A2 · ELEMENTARY',
@@ -138,92 +138,88 @@ class _ReportScreenState extends State<ReportScreen> {
         Row(
           children: [
             Expanded(
-              child: Text('CALL REPORT',
-                  style: Type.mono(10, color: Tokens.ink50, ls: 1.6)),
+              child: Text(
+                'CALL REPORT',
+                style: Type.mono(10, color: Tokens.ink50, ls: 1.6),
+              ),
             ),
             GestureDetector(
               onTap: () => Navigator.of(context).pop(),
-              child: Text('CLOSE ✕',
-                  style: Type.mono(10, color: Tokens.ink50)),
+              child: Text('CLOSE ✕', style: Type.mono(10, color: Tokens.ink50)),
             ),
           ],
         ),
         const SizedBox(height: 14),
         // ── Score hero (ink, teal glow) ─────────────────────
-        ClipRRect(
-          borderRadius: BorderRadius.circular(26),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            color: Tokens.ink,
-            child: Stack(
-              children: [
-                Positioned(
-                  bottom: -70,
-                  right: -40,
-                  child: Container(
-                    width: 190,
-                    height: 190,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [Color(0x520F5951), Colors.transparent],
-                        stops: [0, 0.9],
-                      ),
-                    ),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(26)),
+            // Teal glow bottom-right as the card's own radial gradient.
+            gradient: RadialGradient(
+              center: Alignment(1.2, 1.45),
+              radius: 1.5,
+              colors: [Color(0xFF122B26), Tokens.ink],
+              stops: [0, 0.55],
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$overall',
+                    style: Type.display(74, color: Tokens.cream, height: 0.9),
                   ),
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  const SizedBox(height: 6),
+                  Text(
+                    'OVERALL / 100',
+                    style: Type.mono(9.5, color: Tokens.cream45, ls: 1.4),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('$overall',
-                            style: Type.display(74,
-                                color: Tokens.cream, height: 0.9)),
-                        const SizedBox(height: 6),
-                        Text('OVERALL / 100',
-                            style: Type.mono(9.5,
-                                color: Tokens.cream45, ls: 1.4)),
-                      ],
-                    ),
-                    const Spacer(),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 11, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Tokens.mint,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(cefr,
-                                style: Type.mono(10,
-                                    color: Tokens.tealInk,
-                                    weight: FontWeight.w700,
-                                    ls: 0.6)),
-                          ),
-                          if (headline.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            Text(
-                              headline,
-                              textAlign: TextAlign.right,
-                              style: const TextStyle(
-                                color: Tokens.cream45,
-                                fontSize: 11.5,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Tokens.mint,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        cefr,
+                        style: Type.mono(
+                          10,
+                          color: Tokens.tealInk,
+                          weight: FontWeight.w700,
+                          ls: 0.6,
+                        ),
                       ),
                     ),
+                    if (headline.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        headline,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          color: Tokens.cream45,
+                          fontSize: 11.5,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -245,20 +241,25 @@ class _ReportScreenState extends State<ReportScreen> {
         // ── Stats grid ──────────────────────────────────────
         Row(
           children: [
-            _stat('${(fillers['count'] as num?)?.toInt() ?? 0}',
-                'FILLER\nWORDS', Tokens.ink),
+            _stat(
+              '${(fillers['count'] as num?)?.toInt() ?? 0}',
+              'FILLER\nWORDS',
+              Tokens.ink,
+            ),
             const SizedBox(width: 8),
             _stat(
-                metrics['wpm'] != null ? '${metrics['wpm']}' : '—',
-                'WORDS\nPER MIN',
-                Tokens.goldText),
+              metrics['wpm'] != null ? '${metrics['wpm']}' : '—',
+              'WORDS\nPER MIN',
+              Tokens.goldText,
+            ),
             const SizedBox(width: 8),
             _stat(
-                metrics['talk_share_pct'] != null
-                    ? '${metrics['talk_share_pct']}%'
-                    : '—',
-                'YOUR\nTALK TIME',
-                Tokens.teal),
+              metrics['talk_share_pct'] != null
+                  ? '${metrics['talk_share_pct']}%'
+                  : '—',
+              'YOUR\nTALK TIME',
+              Tokens.teal,
+            ),
           ],
         ),
         if ((metrics['talk_share_pct'] as num? ?? 100) < 40)
@@ -282,8 +283,7 @@ class _ReportScreenState extends State<ReportScreen> {
             Column(
               children: [
                 for (final (i, v) in vocab.indexed) ...[
-                  if (i > 0)
-                    const Divider(height: 18, color: Tokens.hairline),
+                  if (i > 0) const Divider(height: 18, color: Tokens.hairline),
                   _vocabRow((v as Map).cast<String, dynamic>()),
                 ],
               ],
@@ -306,7 +306,9 @@ class _ReportScreenState extends State<ReportScreen> {
               for (final f in focus)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Tokens.clayTint,
                     borderRadius: BorderRadius.circular(999),
@@ -366,9 +368,13 @@ class _ReportScreenState extends State<ReportScreen> {
         Row(
           children: [
             Expanded(
-              child: Text(label,
-                  style: const TextStyle(
-                      fontSize: 12.5, fontWeight: FontWeight.w600)),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             Text('$v', style: Type.mono(12, color: color, ls: 0.3)),
           ],
@@ -403,9 +409,15 @@ class _ReportScreenState extends State<ReportScreen> {
           children: [
             Text(value, style: Type.display(26, color: color)),
             const SizedBox(height: 5),
-            Text(label,
-                style: Type.mono(9.5,
-                    color: Tokens.ink35, weight: FontWeight.w500, ls: 0.8)),
+            Text(
+              label,
+              style: Type.mono(
+                9.5,
+                color: Tokens.ink35,
+                weight: FontWeight.w500,
+                ls: 0.8,
+              ),
+            ),
           ],
         ),
       ),
@@ -424,9 +436,15 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('GRAMMAR',
-              style: Type.mono(9,
-                  color: Tokens.clay, weight: FontWeight.w700, ls: 1.2)),
+          Text(
+            'GRAMMAR',
+            style: Type.mono(
+              9,
+              color: Tokens.clay,
+              weight: FontWeight.w700,
+              ls: 1.2,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             issue['said'] ?? '',
@@ -441,7 +459,10 @@ class _ReportScreenState extends State<ReportScreen> {
           Text(
             issue['better'] ?? '',
             style: const TextStyle(
-                fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.4),
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 10),
           Container(
@@ -452,7 +473,10 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Text(
               issue['why'] ?? '',
               style: const TextStyle(
-                  fontSize: 11.5, color: Tokens.ink50, height: 1.5),
+                fontSize: 11.5,
+                color: Tokens.ink50,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -471,9 +495,15 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('HINGLISH → ENGLISH',
-              style: Type.mono(9,
-                  color: Tokens.goldText, weight: FontWeight.w700, ls: 1.2)),
+          Text(
+            'HINGLISH → ENGLISH',
+            style: Type.mono(
+              9,
+              color: Tokens.goldText,
+              weight: FontWeight.w700,
+              ls: 1.2,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             '"${h['said'] ?? ''}"',
@@ -488,7 +518,10 @@ class _ReportScreenState extends State<ReportScreen> {
           Text(
             h['english'] ?? '',
             style: const TextStyle(
-                fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.4),
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -504,8 +537,7 @@ class _ReportScreenState extends State<ReportScreen> {
               children: [
                 TextSpan(
                   text: '"${v['used'] ?? ''}"',
-                  style:
-                      const TextStyle(color: Tokens.ink60, fontSize: 13.5),
+                  style: const TextStyle(color: Tokens.ink60, fontSize: 13.5),
                 ),
                 const TextSpan(
                   text: '  →  ',
@@ -514,7 +546,9 @@ class _ReportScreenState extends State<ReportScreen> {
                 TextSpan(
                   text: '"${v['better'] ?? ''}"',
                   style: const TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.w700),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -525,20 +559,19 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _section(String title) => Padding(
-        padding: const EdgeInsets.only(top: 22, bottom: 10),
-        child:
-            Text(title, style: Type.mono(10, color: Tokens.ink50, ls: 1.4)),
-      );
+    padding: const EdgeInsets.only(top: 22, bottom: 10),
+    child: Text(title, style: Type.mono(10, color: Tokens.ink50, ls: 1.4)),
+  );
 
   Widget _card(Widget child) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Tokens.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Tokens.hairline),
-        ),
-        child: child,
-      );
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Tokens.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: Tokens.hairline),
+    ),
+    child: child,
+  );
 
   Widget _doneButton({bool filled = false}) {
     return GestureDetector(
@@ -587,7 +620,8 @@ class _ReportScreenState extends State<ReportScreen> {
     if (joined.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Join a community first — see the Community tab')),
+          content: Text('Join a community first — see the Community tab'),
+        ),
       );
       return;
     }
@@ -635,9 +669,9 @@ class _ReportScreenState extends State<ReportScreen> {
         'payload': {'overall': overall, 'headline': headline},
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Shared to ${picked['name']}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Shared to ${picked['name']}')));
       }
     } catch (e) {
       debugPrint('report: share failed: $e');

@@ -93,7 +93,8 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _limitsFailed = true;
         // DNS/socket failures mean the phone has no internet at all —
         // that's a different message than "our server is down".
-        _offline = e.toString().contains('SocketException') ||
+        _offline =
+            e.toString().contains('SocketException') ||
             e.toString().contains('Failed host lookup');
       });
       _retry = Timer(const Duration(seconds: 5), _loadLimits);
@@ -107,8 +108,10 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (uid == null) return;
       final rows = await Supabase.instance.client
           .from('reports')
-          .select('call_id, overall, scores, grammar_issues, focus_points, '
-              'created_at, calls!inner(user_id)')
+          .select(
+            'call_id, overall, scores, grammar_issues, focus_points, '
+            'created_at, calls!inner(user_id)',
+          )
           .eq('calls.user_id', uid)
           .order('created_at', ascending: false)
           .limit(1);
@@ -124,15 +127,14 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     Navigator.of(context)
         .push(
           MaterialPageRoute<void>(
-            builder: (_) =>
-                CallSetupScreen(coach: _coach, scenario: scenario),
+            builder: (_) => CallSetupScreen(coach: _coach, scenario: scenario),
           ),
         )
         .then((_) {
-      // A finished call changes the week's numbers — bypass the cache.
-      Api.invalidateWeek();
-      refresh();
-    });
+          // A finished call changes the week's numbers — bypass the cache.
+          Api.invalidateWeek();
+          refresh();
+        });
   }
 
   /// Pick (or clear) the daily "coach calls you" time.
@@ -156,8 +158,10 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (!mounted) return;
     if (ok) {
       setState(() => _reminderTime = picked);
-      _toast('${_coach.name} will call you daily at '
-          '${picked.format(context)}');
+      _toast(
+        '${_coach.name} will call you daily at '
+        '${picked.format(context)}',
+      );
     } else {
       _toast('Notifications are blocked — allow them in Settings');
     }
@@ -186,9 +190,11 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     : Icons.notifications_active_rounded,
                 color: Tokens.clay,
               ),
-              title: Text(_reminderTime == null
-                  ? 'Set a daily call time'
-                  : 'Daily call: ${_reminderTime!.format(context)}'),
+              title: Text(
+                _reminderTime == null
+                    ? 'Set a daily call time'
+                    : 'Daily call: ${_reminderTime!.format(context)}',
+              ),
               onTap: () {
                 Navigator.pop(sheet);
                 _pickReminderTime();
@@ -196,8 +202,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
             if (Config.supabaseUrl.isNotEmpty)
               ListTile(
-                leading:
-                    const Icon(Icons.logout_rounded, color: Tokens.ink50),
+                leading: const Icon(Icons.logout_rounded, color: Tokens.ink50),
                 title: const Text('Sign out'),
                 onTap: () {
                   Navigator.pop(sheet);
@@ -212,21 +217,26 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Scenario get _suggestedScenario => switch (ProfileService.current.goal) {
-        'interview' => scenarioById('interview'),
-        'ielts' => scenarioById('ielts'),
-        _ => scenarios[0],
-      };
+    'interview' => scenarioById('interview'),
+    'ielts' => scenarioById('ielts'),
+    _ => scenarios[0],
+  };
 
   String get _cefr => switch (ProfileService.current.level) {
-        'beginner' => 'A2',
-        'advanced' => 'C1',
-        _ => 'B2',
-      };
+    'beginner' => 'A2',
+    'advanced' => 'C1',
+    _ => 'B2',
+  };
 
   String get _eyebrow {
     final now = DateTime.now();
     const days = [
-      'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY',
+      'MONDAY',
+      'TUESDAY',
+      'WEDNESDAY',
+      'THURSDAY',
+      'FRIDAY',
+      'SATURDAY',
       'SUNDAY',
     ];
     final part = switch (now.hour) {
@@ -267,8 +277,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_eyebrow,
-                          style: Type.mono(10, color: Tokens.ink50)),
+                      Text(_eyebrow, style: Type.mono(10, color: Tokens.ink50)),
                       const SizedBox(height: 6),
                       Text(
                         name.isEmpty ? 'Hello' : 'Hello, $name',
@@ -282,12 +291,13 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     padding: const EdgeInsets.only(right: 10),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 7),
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
                       decoration: BoxDecoration(
                         color: Tokens.clayTint,
                         borderRadius: BorderRadius.circular(999),
-                        border:
-                            Border.all(color: const Color(0x2EC9502B)),
+                        border: Border.all(color: const Color(0x2EC9502B)),
                       ),
                       child: Row(
                         children: [
@@ -295,15 +305,19 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             width: 6,
                             height: 6,
                             decoration: const BoxDecoration(
-                                color: Tokens.clay, shape: BoxShape.circle),
+                              color: Tokens.clay,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             _reminderTime!.format(context),
-                            style: Type.mono(10,
-                                color: Tokens.clay,
-                                weight: FontWeight.w700,
-                                ls: 0.4),
+                            style: Type.mono(
+                              10,
+                              color: Tokens.clay,
+                              weight: FontWeight.w700,
+                              ls: 0.4,
+                            ),
                           ),
                         ],
                       ),
@@ -316,7 +330,9 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     height: 38,
                     alignment: Alignment.center,
                     decoration: const BoxDecoration(
-                        color: Tokens.ink, shape: BoxShape.circle),
+                      color: Tokens.ink,
+                      shape: BoxShape.circle,
+                    ),
                     child: Text(
                       name.isEmpty ? 'F' : name[0].toUpperCase(),
                       style: const TextStyle(
@@ -330,106 +346,90 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ],
             ),
             const SizedBox(height: 20),
-            // ── Next-up hero (ink card, clay orb) ───────────
-            ClipRRect(
-              borderRadius: BorderRadius.circular(26),
-              child: Container(
-                padding: const EdgeInsets.all(22),
-                decoration: const BoxDecoration(color: Tokens.ink),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: -70,
-                      right: -50,
-                      child: Container(
-                        width: 190,
-                        height: 190,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [Color(0x66C9502B), Colors.transparent],
-                            stops: [0, 0.9],
+            // ── Next-up hero (ink card, clay glow top-right) ─
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(26)),
+                // The prototype's blurred clay orb, expressed as the card's
+                // own off-center radial gradient (fades back to ink).
+                gradient: RadialGradient(
+                  center: Alignment(1.15, -1.35),
+                  radius: 1.5,
+                  colors: [Color(0xFF5C2A1A), Tokens.ink],
+                  stops: [0, 0.55],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'NEXT UP',
+                    style: Type.mono(9.5, color: Tokens.cream45, ls: 1.6),
+                  ),
+                  const SizedBox(height: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 230),
+                    child: Text(
+                      '${scenario.title} with ${_coach.name}',
+                      style: Type.display(26, color: Tokens.cream),
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    heroMeta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Tokens.cream45, fontSize: 12),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _openSetup(scenario),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            decoration: BoxDecoration(
+                              color: Tokens.clay,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Start call',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('NEXT UP',
-                            style: Type.mono(9.5,
-                                color: Tokens.cream45, ls: 1.6)),
-                        const SizedBox(height: 8),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 230),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: () => widget.onGoToTab?.call(1),
+                        child: Container(
+                          width: 52,
+                          height: 52,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Tokens.cream16),
+                          ),
                           child: Text(
-                            '${scenario.title} with ${_coach.name}',
-                            style:
-                                Type.display(26, color: Tokens.cream),
+                            'All',
+                            style: TextStyle(
+                              color: Tokens.cream,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 7),
-                        Text(
-                          heroMeta,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: Tokens.cream45, fontSize: 12),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => _openSetup(scenario),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 15),
-                                  decoration: BoxDecoration(
-                                    color: Tokens.clay,
-                                    borderRadius:
-                                        BorderRadius.circular(999),
-                                  ),
-                                  child: const Text(
-                                    'Start call',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            GestureDetector(
-                              onTap: () => widget.onGoToTab?.call(1),
-                              child: Container(
-                                width: 52,
-                                height: 52,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border:
-                                      Border.all(color: Tokens.cream16),
-                                ),
-                                child: Text(
-                                  'All',
-                                  style: TextStyle(
-                                    color: Tokens.cream,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             if (_limitsFailed) ...[
@@ -443,8 +443,11 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
             ],
             // ── This week ───────────────────────────────────
-            _sectionRow('This week',
-                link: 'DETAILS', onLink: () => widget.onGoToTab?.call(4)),
+            _sectionRow(
+              'This week',
+              link: 'DETAILS',
+              onLink: () => widget.onGoToTab?.call(4),
+            ),
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
@@ -463,13 +466,17 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              Text('${_week?.minutes ?? 0}',
-                                  style: Type.display(34)),
+                              Text(
+                                '${_week?.minutes ?? 0}',
+                                style: Type.display(34),
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 '/ ${ProfileService.current.dailyTargetMin * 7} min',
                                 style: const TextStyle(
-                                    fontSize: 13, color: Tokens.ink50),
+                                  fontSize: 13,
+                                  color: Tokens.ink50,
+                                ),
                               ),
                             ],
                           ),
@@ -479,11 +486,13 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             child: SizedBox(
                               height: 7,
                               child: LinearProgressIndicator(
-                                value: ((_week?.minutes ?? 0) /
-                                        (ProfileService
-                                                .current.dailyTargetMin *
-                                            7))
-                                    .clamp(0.0, 1.0),
+                                value:
+                                    ((_week?.minutes ?? 0) /
+                                            (ProfileService
+                                                    .current
+                                                    .dailyTargetMin *
+                                                7))
+                                        .clamp(0.0, 1.0),
                                 backgroundColor: Tokens.track,
                                 color: Tokens.clay,
                               ),
@@ -494,13 +503,14 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             (_week?.line.isNotEmpty ?? false)
                                 ? _week!.line
                                 : 'Minutes spoken across '
-                                    '${_week?.activeDays ?? 0} active days',
+                                      '${_week?.activeDays ?? 0} active days',
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                fontSize: 11,
-                                color: Tokens.ink50,
-                                height: 1.45),
+                              fontSize: 11,
+                              color: Tokens.ink50,
+                              height: 1.45,
+                            ),
                           ),
                         ],
                       ),
@@ -515,12 +525,15 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(_cefr,
-                              style: Type.display(30, color: Tokens.teal)),
+                          Text(
+                            _cefr,
+                            style: Type.display(30, color: Tokens.teal),
+                          ),
                           const SizedBox(height: 4),
-                          Text('CEFR LEVEL',
-                              style: Type.mono(8.5,
-                                  color: Tokens.ink35, ls: 1.2)),
+                          Text(
+                            'CEFR LEVEL',
+                            style: Type.mono(8.5, color: Tokens.ink35, ls: 1.2),
+                          ),
                         ],
                       ),
                     ),
@@ -538,14 +551,34 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               crossAxisSpacing: 11,
               childAspectRatio: 1.62,
               children: [
-                _goalCard('5m', Tokens.goldTint, Tokens.goldText,
-                    scenarios[0], 'Small talk without freezing'),
-                _goalCard('HR', Tokens.clayTint, Tokens.clay,
-                    scenarioById('interview'), 'HR + tech rounds, your JD'),
-                _goalCard('7+', Tokens.tealTint, Tokens.teal,
-                    scenarioById('ielts'), 'Examiner-style parts 1–3'),
-                _goalCard('VS', Tokens.inkSoft, Tokens.ink,
-                    scenarioById('debate'), 'Defend your opinion, live'),
+                _goalCard(
+                  '5m',
+                  Tokens.goldTint,
+                  Tokens.goldText,
+                  scenarios[0],
+                  'Small talk without freezing',
+                ),
+                _goalCard(
+                  'HR',
+                  Tokens.clayTint,
+                  Tokens.clay,
+                  scenarioById('interview'),
+                  'HR + tech rounds, your JD',
+                ),
+                _goalCard(
+                  '7+',
+                  Tokens.tealTint,
+                  Tokens.teal,
+                  scenarioById('ielts'),
+                  'Examiner-style parts 1–3',
+                ),
+                _goalCard(
+                  'VS',
+                  Tokens.inkSoft,
+                  Tokens.ink,
+                  scenarioById('debate'),
+                  'Defend your opinion, live',
+                ),
               ],
             ),
             // ── Last report ─────────────────────────────────
@@ -563,8 +596,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final r = _lastReport!;
     final overall = (r['overall'] as num?)?.toInt() ?? 0;
     final fixes = ((r['grammar_issues'] as List?) ?? []).length;
-    final headline =
-        ((r['scores'] as Map?)?['headline'] as String?) ?? '';
+    final headline = ((r['scores'] as Map?)?['headline'] as String?) ?? '';
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -588,7 +620,9 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const Text(
                     'Your last report is ready',
                     style: TextStyle(
-                        fontSize: 13.5, fontWeight: FontWeight.w700),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -597,24 +631,29 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         : '$fixes grammar fixes inside',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 11.5, color: Tokens.ink50),
+                    style: const TextStyle(fontSize: 11.5, color: Tokens.ink50),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 10),
-            Text('OPEN',
-                style: Type.mono(10,
-                    color: Tokens.clay, weight: FontWeight.w700)),
+            Text(
+              'OPEN',
+              style: Type.mono(10, color: Tokens.clay, weight: FontWeight.w700),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _goalCard(String code, Color tint, Color color, Scenario s,
-      String caption) {
+  Widget _goalCard(
+    String code,
+    Color tint,
+    Color color,
+    Scenario s,
+    String caption,
+  ) {
     return GestureDetector(
       onTap: () => _openSetup(s),
       child: Container(
@@ -636,23 +675,32 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 color: tint,
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: Text(code,
-                  style: Type.mono(12,
-                      color: color, weight: FontWeight.w700, ls: 0)),
+              child: Text(
+                code,
+                style: Type.mono(
+                  12,
+                  color: color,
+                  weight: FontWeight.w700,
+                  ls: 0,
+                ),
+              ),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(s.title,
-                    style: const TextStyle(
-                        fontSize: 13.5, fontWeight: FontWeight.w700)),
+                Text(
+                  s.title,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   caption,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      const TextStyle(fontSize: 10.5, color: Tokens.ink50),
+                  style: const TextStyle(fontSize: 10.5, color: Tokens.ink50),
                 ),
               ],
             ),
@@ -668,16 +716,22 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       child: Row(
         children: [
           Expanded(
-            child: Text(title,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700)),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            ),
           ),
           if (link != null)
             GestureDetector(
               onTap: onLink,
-              child: Text(link,
-                  style: Type.mono(10,
-                      color: Tokens.clay, weight: FontWeight.w700)),
+              child: Text(
+                link,
+                style: Type.mono(
+                  10,
+                  color: Tokens.clay,
+                  weight: FontWeight.w700,
+                ),
+              ),
             ),
         ],
       ),

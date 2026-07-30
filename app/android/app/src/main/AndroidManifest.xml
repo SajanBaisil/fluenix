@@ -7,14 +7,11 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <!-- usesCleartextTraffic: dev-only, for http://127.0.0.1:8000 via adb
-         reverse. Scope this to a debug network-security-config before any
-         release build. -->
+    <!-- Cleartext traffic is debug-only (see src/debug/AndroidManifest.xml). -->
     <application
         android:label="Fluenix"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"

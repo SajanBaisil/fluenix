@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Design tokens — 1:1 with design/README.md (cream / clay / teal editorial).
 abstract final class Tokens {
@@ -63,18 +62,22 @@ abstract final class Tokens {
   );
 }
 
-/// One family app-wide: Plus Jakarta Sans — simple, friendly, clear
-/// numerals. Hierarchy comes from weight, not from mixing families.
-/// The helper names are roles, not fonts: `display` = big headline/number,
-/// `mono` = small uppercase label (tracked caps + tabular figures).
+/// One family app-wide: Plus Jakarta Sans, bundled in assets/fonts so the
+/// first offline launch never falls back to system fonts. Hierarchy comes
+/// from weight, not from mixing families. The helper names are roles:
+/// `display` = big headline/number, `mono` = small uppercase label
+/// (tracked caps + tabular figures).
 abstract final class Type {
+  static const family = 'PlusJakartaSans';
+
   static TextStyle display(
     double size, {
     Color color = Tokens.ink,
     double height = 1.1,
     FontWeight weight = FontWeight.w800,
   }) =>
-      GoogleFonts.plusJakartaSans(
+      TextStyle(
+        fontFamily: family,
         fontSize: size,
         height: height,
         color: color,
@@ -87,7 +90,8 @@ abstract final class Type {
     FontWeight weight = FontWeight.w700,
     double ls = 1.2,
   }) =>
-      GoogleFonts.plusJakartaSans(
+      TextStyle(
+        fontFamily: family,
         fontSize: size,
         color: color,
         fontWeight: weight,
@@ -100,6 +104,7 @@ ThemeData buildFluenixTheme() {
   final base = ThemeData(
     brightness: Brightness.light,
     useMaterial3: true,
+    fontFamily: Type.family,
     scaffoldBackgroundColor: Tokens.cream,
     colorScheme: const ColorScheme.light(
       primary: Tokens.clay,
@@ -110,7 +115,7 @@ ThemeData buildFluenixTheme() {
     ),
   );
 
-  final text = GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
+  final text = base.textTheme.apply(
     bodyColor: Tokens.ink,
     displayColor: Tokens.ink,
   );
@@ -139,7 +144,8 @@ ThemeData buildFluenixTheme() {
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: Tokens.ink,
-      contentTextStyle: GoogleFonts.plusJakartaSans(
+      contentTextStyle: const TextStyle(
+        fontFamily: Type.family,
         color: Tokens.cream,
         fontSize: 13,
         fontWeight: FontWeight.w600,

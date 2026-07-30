@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
   flutter_local_notifications: ^22.1.0
   flutter_soloud: ^4.0.13
-  google_fonts: ^8.2.0
   http: ^1.6.0
   record: ^7.1.1
   shared_preferences: ^2.5.5
@@ -24,6 +23,42 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
+
+# App icon (adaptive on Android). Regenerate:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/brand/icon.png
+  adaptive_icon_background: "#C9502B"
+  adaptive_icon_foreground: assets/brand/icon_fg.png
+  remove_alpha_ios: true
+
+# Launch screen (cream, centered mark). Regenerate:
+#   dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#F6F1E8"
+  image: assets/brand/splash.png
+  android_12:
+    color: "#F6F1E8"
+    image: assets/brand/splash.png
 
 flutter:
   uses-material-design: true
+
+  # Bundled so first launch never falls back to system fonts offline.
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-400.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans-500.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-600.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-700.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans-800.ttf
+          weight: 800

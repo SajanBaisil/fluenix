@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Dev builds may talk to http://127.0.0.1:8000 via adb reverse.
+         Release manifests never allow cleartext. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

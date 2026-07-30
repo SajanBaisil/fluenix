@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/api.dart';
 import '../../theme/app_theme.dart';
+import 'drill_runner_screen.dart';
 
 /// Practice tab: drills generated from the learner's own recent mistakes,
 /// plus review material — study between calls, then apply it live.
@@ -14,6 +17,8 @@ class PracticeScreen extends StatefulWidget {
 
 class PracticeScreenState extends State<PracticeScreen> {
   PracticePack? _pack;
+  DailyPack? _daily;
+  bool _dailyLoading = true;
   bool _loading = true;
   bool _failed = false;
   final Set<int> _revealed = {};
@@ -26,6 +31,7 @@ class PracticeScreenState extends State<PracticeScreen> {
   }
 
   Future<void> refresh() async {
+    unawaited(_loadDaily());
     if (_pack != null) return; // keep the generated pack for the session
     setState(() {
       _loading = true;
@@ -49,6 +55,36 @@ class PracticeScreenState extends State<PracticeScreen> {
     }
   }
 
+  Future<void> _loadDaily() async {
+    try {
+      final daily = await Api.daily();
+      if (mounted) {
+        setState(() {
+          _daily = daily;
+          _dailyLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('practice: daily load failed: $e');
+      if (mounted) setState(() => _dailyLoading = false);
+    }
+  }
+
+  void _startRunner() {
+    final daily = _daily;
+    if (daily == null) return;
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute<void>(
+            builder: (_) => DrillRunnerScreen(pack: daily),
+          ),
+        )
+        .then((_) {
+          Api.invalidateWeek(); // streak may have changed
+          _loadDaily();
+        });
+  }
+
   Future<void> _regenerate() async {
     setState(() {
       _pack = null;
@@ -60,212 +96,247 @@ class PracticeScreenState extends State<PracticeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pack = _pack;
     return Scaffold(
       body: SafeArea(
-        child: _loading
-            ? const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Tokens.indigoSoft),
-                    SizedBox(height: 18),
-                    Text(
-                      'Building drills from your mistakes…',
-                      style: TextStyle(color: Tokens.muted, fontSize: 13),
-                    ),
-                  ],
-                ),
-              )
-            : _failed
-            ? _message(
-                Icons.cloud_off_rounded,
-                "Couldn't load practice",
-                'Check your connection and pull to retry.',
-                retry: true,
-              )
-            : (pack == null || pack.isEmpty)
-            ? _message(
-                Icons.fitness_center_rounded,
-                'Nothing to practice yet',
-                'Finish a call and your mistakes become drills here.',
-              )
-            : _content(pack),
-      ),
-    );
-  }
-
-  Widget _message(
-    IconData icon,
-    String title,
-    String sub, {
-    bool retry = false,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
           children: [
-            Icon(icon, size: 44, color: Tokens.faint),
+            Text('Practice', style: Type.display(30)),
+            const SizedBox(height: 5),
+            const Text(
+              'A little every day beats a lot once a week.',
+              style: TextStyle(fontSize: 13, color: Tokens.ink60),
+            ),
             const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              sub,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Tokens.muted, fontSize: 13),
-            ),
-            if (retry) ...[
-              const SizedBox(height: 18),
-              TextButton(
-                onPressed: _regenerate,
-                child: const Text(
-                  'Retry',
-                  style: TextStyle(color: Tokens.indigoSoft),
-                ),
-              ),
-            ],
+            _dailyHero(),
+            ..._callsSections(),
           ],
         ),
       ),
     );
   }
 
-  Widget _content(PracticePack pack) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-      children: [
-        Text('Practice', style: Type.display(30)),
-        const SizedBox(height: 5),
-        const Text(
-          'Made from your own mistakes — clear these before your next call.',
-          style: TextStyle(fontSize: 13, color: Tokens.ink60),
+  /// The "Today's 5" hero (teal, mint glow): state-aware CTA + streak.
+  Widget _dailyHero() {
+    final daily = _daily;
+    final done = daily?.done.length ?? 0;
+    final total = daily?.items.length ?? 5;
+    final streak = daily?.streak ?? 0;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(26)),
+        gradient: RadialGradient(
+          center: Alignment(1.2, -1.4),
+          radius: 1.5,
+          colors: [Color(0xFF327D6D), Tokens.teal],
+          stops: [0, 0.55],
         ),
-        const SizedBox(height: 16),
-        // Teal hero (design §06)
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(26)),
-            // Mint glow top-right as the card's own radial gradient.
-            gradient: RadialGradient(
-              center: Alignment(1.2, -1.4),
-              radius: 1.5,
-              colors: [Color(0xFF327D6D), Tokens.teal],
-              stops: [0, 0.55],
-            ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            streak > 0 ? "TODAY'S 5 · DAY $streak" : "TODAY'S 5",
+            style: Type.mono(9.5, color: const Color(0xB8F6F1E8), ls: 1.6),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 7),
+          Text(
+            _dailyLoading
+                ? 'Preparing your five…'
+                : daily == null
+                ? "Couldn't load today's five"
+                : daily.completed
+                ? 'All five, done. See you tomorrow.'
+                : 'Your daily five is ready',
+            style: Type.display(24, color: Tokens.cream),
+          ),
+          const SizedBox(height: 14),
+          Row(
             children: [
-              Text(
-                'TODAY\'S DRILLS',
-                style: Type.mono(9.5, color: const Color(0xB8F6F1E8), ls: 1.6),
-              ),
-              const SizedBox(height: 7),
-              Text(
-                'Fix it before the next call',
-                style: Type.display(24, color: Tokens.cream),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: _regenerate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 11,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Tokens.cream,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'New drills',
-                        style: TextStyle(
-                          color: Tokens.teal,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
+              if (_dailyLoading)
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: Tokens.cream,
+                  ),
+                )
+              else
+                GestureDetector(
+                  onTap: daily == null
+                      ? () {
+                          setState(() => _dailyLoading = true);
+                          _loadDaily();
+                        }
+                      : _startRunner,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Tokens.cream,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      daily == null
+                          ? 'Retry'
+                          : daily.completed
+                          ? 'Review'
+                          : done > 0
+                          ? 'Continue'
+                          : 'Start — 4 min',
+                      style: const TextStyle(
+                        color: Tokens.teal,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '${_done.length} / ${pack.exercises.length} DONE',
-                    style: Type.mono(10, color: const Color(0xB8F6F1E8), ls: 1),
-                  ),
-                ],
+                ),
+              const SizedBox(width: 12),
+              if (daily != null)
+                Text(
+                  '$done / $total DONE',
+                  style: Type.mono(10, color: const Color(0xB8F6F1E8), ls: 1),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The "from your calls" material below the daily hero.
+  List<Widget> _callsSections() {
+    final pack = _pack;
+    if (_loading) {
+      return [
+        _label('FROM YOUR CALLS'),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 30),
+          child: Center(child: CircularProgressIndicator(color: Tokens.clay)),
+        ),
+      ];
+    }
+    if (_failed) {
+      return [
+        _label('FROM YOUR CALLS'),
+        _card(
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  "Couldn't load your call drills.",
+                  style: TextStyle(fontSize: 13, color: Tokens.ink60),
+                ),
+              ),
+              TextButton(
+                onPressed: _regenerate,
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(color: Tokens.clay),
+                ),
               ),
             ],
           ),
         ),
-        if (pack.exercises.isNotEmpty) ...[
-          _label('DRILLS'),
-          for (final (i, ex) in pack.exercises.indexed) _drill(i, ex),
-        ],
-        if (pack.mistakes.isNotEmpty) ...[
-          _label('FROM YOUR RECENT CALLS'),
-          _card(
-            Column(
-              children: [
-                for (final (i, m) in pack.mistakes.indexed) ...[
-                  if (i > 0) const Divider(height: 20, color: Tokens.line),
-                  _mistakeRow(m),
-                ],
-              ],
-            ),
+      ];
+    }
+    if (pack == null || pack.isEmpty) {
+      return [
+        _label('FROM YOUR CALLS'),
+        _card(
+          const Text(
+            'Finish a call and your own mistakes become extra drills here.',
+            style: TextStyle(fontSize: 13, color: Tokens.ink60, height: 1.5),
           ),
-        ],
-        if (pack.vocab.isNotEmpty) ...[
-          _label('WORDS TO UPGRADE'),
-          _card(
-            Column(
-              children: [
-                for (final (i, v) in pack.vocab.indexed) ...[
-                  if (i > 0) const Divider(height: 16, color: Tokens.line),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: '"${v['used'] ?? ''}"',
-                                style: const TextStyle(
-                                  color: Tokens.muted,
-                                  fontSize: 13.5,
-                                ),
+        ),
+      ];
+    }
+    return [
+      if (pack.exercises.isNotEmpty) ...[
+        Padding(
+          padding: const EdgeInsets.only(top: 22, bottom: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'MORE DRILLS · FROM YOUR CALLS',
+                  style: Type.mono(10, color: Tokens.ink50, ls: 1.4),
+                ),
+              ),
+              GestureDetector(
+                onTap: _regenerate,
+                child: const Icon(
+                  Icons.refresh_rounded,
+                  size: 17,
+                  color: Tokens.ink35,
+                ),
+              ),
+            ],
+          ),
+        ),
+        for (final (i, ex) in pack.exercises.indexed) _drill(i, ex),
+      ],
+      if (pack.mistakes.isNotEmpty) ...[
+        _label('FROM YOUR RECENT CALLS'),
+        _card(
+          Column(
+            children: [
+              for (final (i, m) in pack.mistakes.indexed) ...[
+                if (i > 0) const Divider(height: 20, color: Tokens.line),
+                _mistakeRow(m),
+              ],
+            ],
+          ),
+        ),
+      ],
+      if (pack.vocab.isNotEmpty) ...[
+        _label('WORDS TO UPGRADE'),
+        _card(
+          Column(
+            children: [
+              for (final (i, v) in pack.vocab.indexed) ...[
+                if (i > 0) const Divider(height: 16, color: Tokens.line),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '"${v['used'] ?? ''}"',
+                              style: const TextStyle(
+                                color: Tokens.muted,
+                                fontSize: 13.5,
                               ),
-                              const TextSpan(
-                                text: '  →  ',
-                                style: TextStyle(color: Tokens.faint),
+                            ),
+                            const TextSpan(
+                              text: '  →  ',
+                              style: TextStyle(color: Tokens.faint),
+                            ),
+                            TextSpan(
+                              text: '"${v['better'] ?? ''}"',
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
                               ),
-                              TextSpan(
-                                text: '"${v['better'] ?? ''}"',
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ],
-            ),
+            ],
           ),
-        ],
+        ),
       ],
-    );
+    ];
   }
 
   Widget _drill(int i, PracticeExercise ex) {

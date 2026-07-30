@@ -72,11 +72,11 @@ class TranscriptTurn {
   final int tEndMs;
 
   Map<String, Object> toJson() => {
-        'role': role,
-        'text': text,
-        't_start_ms': tStartMs,
-        't_end_ms': tEndMs,
-      };
+    'role': role,
+    'text': text,
+    't_start_ms': tStartMs,
+    't_end_ms': tEndMs,
+  };
 }
 
 /// GET /v1/me/week — the Home screen's "Your week" card.
@@ -89,6 +89,7 @@ class WeekSummary {
     required this.deltaOverall,
     required this.topFocus,
     required this.line,
+    required this.streak,
   });
 
   final int calls;
@@ -99,7 +100,52 @@ class WeekSummary {
   final String topFocus;
   final String line;
 
+  /// Calls-or-drills streak (one rest day a week forgiven).
+  final int streak;
+
   bool get isEmpty => calls == 0;
+}
+
+/// One item of "Today's 5" (kinds: mcq | rewrite | speak).
+class DailyItem {
+  const DailyItem({
+    required this.kind,
+    required this.prompt,
+    required this.options,
+    required this.answer,
+    required this.why,
+  });
+
+  final String kind;
+  final String prompt;
+  final List<String> options;
+  final String answer;
+  final String why;
+
+  static DailyItem fromMap(Map<String, dynamic> m) => DailyItem(
+    kind: (m['kind'] as String?) ?? 'mcq',
+    prompt: (m['prompt'] as String?) ?? '',
+    options: ((m['options'] as List?) ?? []).map((e) => e.toString()).toList(),
+    answer: (m['answer'] as String?) ?? '',
+    why: (m['why'] as String?) ?? '',
+  );
+}
+
+/// GET /v1/practice/daily — today's pack + completion + streak.
+class DailyPack {
+  const DailyPack({
+    required this.date,
+    required this.items,
+    required this.done,
+    required this.completed,
+    required this.streak,
+  });
+
+  final String date;
+  final List<DailyItem> items;
+  final Set<int> done;
+  final bool completed;
+  final int streak;
 }
 
 class PracticeExercise {
@@ -134,10 +180,10 @@ abstract final class Api {
   static Uri _u(String path) => Uri.parse('${Config.backendUrl}$path');
 
   static Map<String, String> get _headers => {
-        'content-type': 'application/json',
-        'authorization':
-            'Bearer ${Supabase.instance.client.auth.currentSession?.accessToken ?? ''}',
-      };
+    'content-type': 'application/json',
+    'authorization':
+        'Bearer ${Supabase.instance.client.auth.currentSession?.accessToken ?? ''}',
+  };
 
   /// 401 usually means a stale access token — refresh the session once and
   /// retry before giving up.
@@ -160,7 +206,8 @@ abstract final class Api {
       final resp = await _getWithRefresh(_u('/v1/me/limits'));
       if (resp.statusCode != 200) {
         debugPrint(
-            'api: limits ${resp.statusCode}: ${resp.body.substring(0, resp.body.length.clamp(0, 200))}');
+          'api: limits ${resp.statusCode}: ${resp.body.substring(0, resp.body.length.clamp(0, 200))}',
+        );
         throw ApiException('limits failed: ${resp.statusCode}');
       }
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -199,7 +246,9 @@ abstract final class Api {
     }
     if (resp.statusCode == 429) throw const OutOfMinutesException();
     if (resp.statusCode != 200) {
-      debugPrint('api: session ${resp.statusCode}: ${resp.body.substring(0, resp.body.length.clamp(0, 200))}');
+      debugPrint(
+        'api: session ${resp.statusCode}: ${resp.body.substring(0, resp.body.length.clamp(0, 200))}',
+      );
       throw ApiException('session failed: ${resp.statusCode}');
     }
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -235,8 +284,9 @@ abstract final class Api {
             const Duration(minutes: 30)) {
       return cached;
     }
-    final resp = await _getWithRefresh(_u('/v1/me/week'))
-        .timeout(const Duration(seconds: 30));
+    final resp = await _getWithRefresh(
+      _u('/v1/me/week'),
+    ).timeout(const Duration(seconds: 30));
     if (resp.statusCode != 200) {
       debugPrint('api: week ${resp.statusCode}');
       throw ApiException('week failed: ${resp.statusCode}');
@@ -250,25 +300,66 @@ abstract final class Api {
       deltaOverall: (data['delta_overall'] as num?)?.toInt(),
       topFocus: (data['top_focus'] as String?) ?? '',
       line: (data['line'] as String?) ?? '',
+      streak: (data['streak'] as num?)?.toInt() ?? 0,
     );
     _weekCache = week;
     _weekCacheAt = DateTime.now();
     return week;
   }
 
+  static DailyPack _parseDaily(Map<String, dynamic> data) => DailyPack(
+    date: (data['date'] as String?) ?? '',
+    items: ((data['items'] as List?) ?? [])
+        .whereType<Map>()
+        .map((e) => DailyItem.fromMap(e.cast<String, dynamic>()))
+        .toList(),
+    done: ((data['done'] as List?) ?? [])
+        .map((e) => (e as num).toInt())
+        .toSet(),
+    completed: (data['completed'] as bool?) ?? false,
+    streak: (data['streak'] as num?)?.toInt() ?? 0,
+  );
+
+  static Future<DailyPack> daily() async {
+    // Generation can take a few seconds on the first fetch of the day.
+    final resp = await _getWithRefresh(
+      _u('/v1/practice/daily'),
+    ).timeout(const Duration(seconds: 60));
+    if (resp.statusCode != 200) {
+      debugPrint('api: daily ${resp.statusCode}');
+      throw ApiException('daily failed: ${resp.statusCode}');
+    }
+    return _parseDaily(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
+  /// Marks one item done; returns {done, completed, streak}.
+  static Future<Map<String, dynamic>> dailyComplete(int index) async {
+    final resp = await http
+        .post(
+          _u('/v1/practice/daily/complete'),
+          headers: _headers,
+          body: jsonEncode({'index': index}),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (resp.statusCode != 200) {
+      throw ApiException('complete failed: ${resp.statusCode}');
+    }
+    return jsonDecode(resp.body) as Map<String, dynamic>;
+  }
+
   static Future<PracticePack> practice() async {
-    final resp = await _getWithRefresh(_u('/v1/practice'))
-        .timeout(const Duration(seconds: 60));
+    final resp = await _getWithRefresh(
+      _u('/v1/practice'),
+    ).timeout(const Duration(seconds: 60));
     if (resp.statusCode != 200) {
       debugPrint('api: practice ${resp.statusCode}');
       throw ApiException('practice failed: ${resp.statusCode}');
     }
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    List<Map<String, dynamic>> maps(String key) =>
-        ((data[key] as List?) ?? [])
-            .whereType<Map>()
-            .map((e) => e.cast<String, dynamic>())
-            .toList();
+    List<Map<String, dynamic>> maps(String key) => ((data[key] as List?) ?? [])
+        .whereType<Map>()
+        .map((e) => e.cast<String, dynamic>())
+        .toList();
     return PracticePack(
       exercises: [
         for (final e in maps('exercises'))

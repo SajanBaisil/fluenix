@@ -10,11 +10,19 @@ import 'package:timezone/timezone.dart' as tz;
 abstract final class Reminders {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static const _timeKey = 'reminder_minutes'; // minutes since midnight
+  static const _drillKey = 'drill_reminder_minutes';
   static const _channel = AndroidNotificationChannel(
     'daily_call',
     'Daily coach call',
     description: 'Your coach calls you for daily practice',
     importance: Importance.max,
+  );
+  // Quieter than the call: a normal notification, no full-screen intent.
+  static const _drillChannel = AndroidNotificationChannel(
+    'daily_drills',
+    "Today's 5 drills",
+    description: 'Your daily five practice drills are ready',
+    importance: Importance.defaultImportance,
   );
 
   /// Set by main() — navigates to the call screen.
@@ -37,9 +45,12 @@ abstract final class Reminders {
         if (response.payload == 'incoming_call') onAnswer?.call();
       },
     );
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await android?.createNotificationChannel(_channel);
+    await android?.createNotificationChannel(_drillChannel);
 
     // If the app was launched by tapping the notification, route to a call.
     final launch = await _plugin.getNotificationAppLaunchDetails();
@@ -59,8 +70,10 @@ abstract final class Reminders {
   }
 
   static Future<bool> schedule(TimeOfDay time, String coachName) async {
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     final granted = await android?.requestNotificationsPermission() ?? true;
     if (!granted) return false;
 
@@ -107,8 +120,10 @@ abstract final class Reminders {
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time, // repeat daily
     );
-    debugPrint('reminders: daily call scheduled for '
-        '${time.hour}:${time.minute.toString().padLeft(2, '0')}');
+    debugPrint(
+      'reminders: daily call scheduled for '
+      '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
+    );
     return true;
   }
 
@@ -116,5 +131,62 @@ abstract final class Reminders {
     final sp = await SharedPreferences.getInstance();
     await sp.remove(_timeKey);
     await _plugin.cancel(id: 1);
+  }
+
+  // ── "Today's 5" morning drill reminder (id 2) ─────────────
+  static Future<TimeOfDay?> drillTime() async {
+    final sp = await SharedPreferences.getInstance();
+    final minutes = sp.getInt(_drillKey);
+    if (minutes == null) return null;
+    return TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
+  }
+
+  static Future<bool> scheduleDrills(TimeOfDay time) async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    final granted = await android?.requestNotificationsPermission() ?? true;
+    if (!granted) return false;
+
+    final sp = await SharedPreferences.getInstance();
+    await sp.setInt(_drillKey, time.hour * 60 + time.minute);
+
+    var next = tz.TZDateTime(
+      tz.local,
+      tz.TZDateTime.now(tz.local).year,
+      tz.TZDateTime.now(tz.local).month,
+      tz.TZDateTime.now(tz.local).day,
+      time.hour,
+      time.minute,
+    );
+    if (next.isBefore(tz.TZDateTime.now(tz.local))) {
+      next = next.add(const Duration(days: 1));
+    }
+
+    await _plugin.zonedSchedule(
+      id: 2,
+      title: "Today's 5 is ready",
+      body: 'Four minutes of English practice — keep the streak alive',
+      scheduledDate: next,
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          _drillChannel.id,
+          _drillChannel.name,
+          channelDescription: _drillChannel.description,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      payload: 'daily_drills',
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time, // repeat daily
+    );
+    return true;
+  }
+
+  static Future<void> cancelDrills() async {
+    final sp = await SharedPreferences.getInstance();
+    await sp.remove(_drillKey);
+    await _plugin.cancel(id: 2);
   }
 }

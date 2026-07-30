@@ -9,12 +9,10 @@ import json
 import logging
 from typing import Any
 
-import httpx
 from fastapi import APIRouter
 
-from .. import supa
+from .. import analysis, supa
 from ..auth import UserId
-from ..config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1")
@@ -102,18 +100,10 @@ async def practice_pack(user_id: UserId) -> dict[str, Any]:
     }
     exercises: list[dict[str, Any]] = []
     try:
-        async with httpx.AsyncClient(timeout=45) as client:
-            resp = await client.post(
-                "https://generativelanguage.googleapis.com/v1beta/"
-                f"{settings().analysis_model}:generateContent",
-                params={"key": settings().gemini_api_key},
-                json=body,
-            )
-        if resp.status_code == 200:
-            text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-            exercises = (json.loads(text).get("exercises") or [])[:8]
-        else:
-            logger.error("practice generation %s: %s", resp.status_code, resp.text[:200])
+        # Retries + model fallback + thought-part-safe parsing.
+        data = await analysis._generate(body, timeout=45)
+        text = analysis._candidate_text(data)
+        exercises = (json.loads(text).get("exercises") or [])[:8]
     except Exception:
         logger.exception("practice generation failed for %s", user_id)
 

@@ -6,7 +6,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
-from .. import analysis, gemini, supa
+from .. import analysis, gemini, streaks, supa
 from ..auth import UserId
 from ..config import settings
 
@@ -317,6 +317,8 @@ async def my_week(user_id: UserId) -> dict[str, Any]:
         "delta_overall": delta,
         "top_focus": top_focus,
         "line": line,
+        # Calls-or-drills streak — the Home pill reads this.
+        "streak": await streaks.current_streak(user_id),
     }
 
 

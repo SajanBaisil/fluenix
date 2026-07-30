@@ -31,6 +31,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Map<String, dynamic>? _lastReport;
   Coach _coach = coaches[1];
   TimeOfDay? _reminderTime;
+  TimeOfDay? _drillTime;
   WeekSummary? _week;
 
   bool get _hasBackend =>
@@ -60,6 +61,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _coach = await CoachPrefs.selected();
     await ProfileService.load();
     _reminderTime = await Reminders.scheduledTime();
+    _drillTime = await Reminders.drillTime();
     if (mounted) setState(() {});
     unawaited(_loadLimits());
     unawaited(_loadLastReport());
@@ -171,6 +173,33 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  /// Pick (or clear) the "Today's 5 is ready" morning nudge.
+  Future<void> _pickDrillTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _drillTime ?? const TimeOfDay(hour: 8, minute: 0),
+      helpText: "When should Today's 5 nudge you?",
+      cancelText: _drillTime == null ? 'Cancel' : 'Turn off',
+    );
+    if (!mounted) return;
+    if (picked == null) {
+      if (_drillTime != null) {
+        await Reminders.cancelDrills();
+        setState(() => _drillTime = null);
+        _toast('Drill reminder turned off');
+      }
+      return;
+    }
+    final ok = await Reminders.scheduleDrills(picked);
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _drillTime = picked);
+      _toast("Today's 5 will nudge you daily at ${picked.format(context)}");
+    } else {
+      _toast('Notifications are blocked — allow them in Settings');
+    }
+  }
+
   Future<void> _profileSheet() async {
     await showModalBottomSheet<void>(
       context: context,
@@ -198,6 +227,21 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               onTap: () {
                 Navigator.pop(sheet);
                 _pickReminderTime();
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.fitness_center_rounded,
+                color: _drillTime == null ? Tokens.ink50 : Tokens.teal,
+              ),
+              title: Text(
+                _drillTime == null
+                    ? "Morning drills reminder"
+                    : "Today's 5 reminder: ${_drillTime!.format(context)}",
+              ),
+              onTap: () {
+                Navigator.pop(sheet);
+                _pickDrillTime();
               },
             ),
             if (Config.supabaseUrl.isNotEmpty)
@@ -286,12 +330,13 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ],
                   ),
                 ),
-                if (_reminderTime != null)
+                // Streak pill (design §01, gamified flag).
+                if ((_week?.streak ?? 0) > 0)
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
+                        horizontal: 11,
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
@@ -311,9 +356,9 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            _reminderTime!.format(context),
+                            '${_week!.streak}',
                             style: Type.mono(
-                              10,
+                              12,
                               color: Tokens.clay,
                               weight: FontWeight.w700,
                               ls: 0.4,

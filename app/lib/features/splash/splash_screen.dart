@@ -69,7 +69,9 @@ class _SplashGateState extends State<SplashGate>
   Widget _splash() {
     return GestureDetector(
       onTap: _finish,
-      child: Container(
+      // Material ancestor: the overlay lives above the app's Scaffolds, so
+      // Text/ProgressIndicator need their own Material context.
+      child: Material(
         color: Tokens.ink,
         child: Stack(
           alignment: Alignment.center,

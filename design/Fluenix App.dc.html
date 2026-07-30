@@ -15,6 +15,8 @@ a{color:#C9502B;text-decoration:none}a:hover{color:#a53f20}
 @keyframes orbp{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.22);opacity:.12}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 @keyframes lineIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes load{from{width:0}to{width:100%}}
 ::-webkit-scrollbar{width:0;height:0}
 </style></helmet>
 <div style="min-height:100vh;display:flex;gap:56px;align-items:flex-start;padding:56px 60px 80px;box-sizing:border-box">
@@ -38,6 +40,25 @@ a{color:#C9502B;text-decoration:none}a:hover{color:#a53f20}
 
   <div style="display:flex;flex-direction:column;gap:16px;align-items:center">
     <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ isDark }}" hint-size="402px,874px">
+
+      <sc-if value="{{ atSplash }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ goHome }}" style="height:874px;background:#14110F;color:#F6F1E8;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer">
+        <div style="position:absolute;left:50%;top:236px;transform:translateX(-50%);width:460px;height:460px;border-radius:999px;background:radial-gradient(circle,rgba(201,80,43,.4),rgba(201,80,43,0) 66%);filter:blur(12px)"></div>
+        <div style="position:relative;display:flex;align-items:center;gap:9px;height:104px;animation:riseIn .6s ease both">
+          <div style="width:9px;height:30px;border-radius:99px;background:#F0C9A8;animation:wf 1.3s ease-in-out 0s infinite"></div>
+          <div style="width:9px;height:62px;border-radius:99px;background:#E8A06F;animation:wf 1.3s ease-in-out .14s infinite"></div>
+          <div style="width:9px;height:104px;border-radius:99px;background:#C9502B;animation:wf 1.3s ease-in-out .28s infinite"></div>
+          <div style="width:9px;height:62px;border-radius:99px;background:#E8A06F;animation:wf 1.3s ease-in-out .42s infinite"></div>
+          <div style="width:9px;height:38px;border-radius:99px;background:#F0C9A8;animation:wf 1.3s ease-in-out .56s infinite"></div>
+        </div>
+        <div style="position:relative;font:400 54px/1 'Newsreader',Georgia,serif;margin-top:38px;animation:riseIn .6s ease .12s both">Fluenix</div>
+        <div style="position:relative;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.22em;text-transform:uppercase;color:rgba(246,241,232,.5);margin-top:16px;animation:riseIn .6s ease .24s both">Speak English on a call</div>
+        <div style="position:absolute;left:0;right:0;bottom:52px;display:flex;flex-direction:column;align-items:center;gap:20px">
+          <div style="width:104px;height:3px;border-radius:99px;background:rgba(246,241,232,.14);overflow:hidden"><div style="height:100%;border-radius:99px;background:#C9502B;animation:load 2.2s ease-out both"></div></div>
+          <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.18em;color:rgba(246,241,232,.35)">TAP TO CONTINUE</div>
+        </div>
+      </div>
+      </sc-if>
 
       <sc-if value="{{ atHome }}" hint-placeholder-val="{{ true }}">
       <div style="height:874px;display:flex;flex-direction:column;background:#F6F1E8">
@@ -680,10 +701,10 @@ const LEAD=[
  {rank:'2',mono:'A',name:'You',mins:'164',color:'#fff',tint:CLAY},
  {rank:'3',mono:'F',name:'Farhan K.',mins:'151',color:'#A9761A',tint:'#FAF0D8'},
  {rank:'4',mono:'D',name:'Divya M.',mins:'139',color:'#14110F',tint:'rgba(20,17,15,.07)'}];
-const NAV=[['home','Home'],['coaches','Coaches'],['setup','Call setup'],['call','Active call'],['report','Call report'],['practice','Practice'],['community','Community'],['progress','Progress']];
+const NAV=[['splash','Splash'],['home','Home'],['coaches','Coaches'],['setup','Call setup'],['call','Active call'],['report','Call report'],['practice','Practice'],['community','Community'],['progress','Progress']];
 
 class Component extends DCLogic {
-  state={screen:'home',coach:0,filter:'all',topic:0,level:'B2',dur:10,muted:false,captions:true,sec:0,turn:1};
+  state={screen:'splash',coach:0,filter:'all',topic:0,level:'B2',dur:10,muted:false,captions:true,sec:0,turn:1};
   componentDidMount(){
     this.t=setInterval(()=>{
       if(this.state.screen!=='call')return;
@@ -707,9 +728,10 @@ class Component extends DCLogic {
     const speaker=TURNS[Math.min(s.turn,TURNS.length)-1].who;
     const idx=NAV.findIndex(n=>n[0]===sc);
     return {
+      atSplash:sc==='splash',
       atHome:sc==='home',atCoaches:sc==='coaches',atSetup:sc==='setup',atCall:sc==='call',
       atReport:sc==='report',atPractice:sc==='practice',atCommunity:sc==='community',atProgress:sc==='progress',
-      isDark:sc==='call', gamified,
+      isDark:sc==='call'||sc==='splash', gamified,
       goHome:()=>this.go('home'),goCoaches:()=>this.go('coaches'),goSetup:()=>this.go('setup'),
       goPractice:()=>this.go('practice'),goCommunity:()=>this.go('community'),goProgress:()=>this.go('progress'),
       goReport:()=>this.go('report'),

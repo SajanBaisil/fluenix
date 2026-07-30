@@ -32,7 +32,7 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: assets/brand/icon.png
-  adaptive_icon_background: "#C9502B"
+  adaptive_icon_background: assets/brand/icon_bg.png
   adaptive_icon_foreground: assets/brand/icon_fg.png
   remove_alpha_ios: true
 

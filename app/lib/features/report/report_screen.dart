@@ -121,10 +121,6 @@ class _ReportScreenState extends State<ReportScreen> {
     final fillers = (r['filler_words'] as Map?)?.cast<String, dynamic>() ?? {};
     final focus = (r['focus_points'] as List?) ?? [];
     final metrics = (r['metrics'] as Map?)?.cast<String, dynamic>() ?? {};
-    final hinglish =
-        ((r['hinglish'] as Map?)?.cast<String, dynamic>() ?? {})['examples']
-            as List? ??
-        [];
 
     final cefr = switch (ProfileService.current.level) {
       'beginner' => 'A2 · ELEMENTARY',
@@ -289,12 +285,6 @@ class _ReportScreenState extends State<ReportScreen> {
               ],
             ),
           ),
-        ],
-        // ── Hinglish ────────────────────────────────────────
-        if (hinglish.isNotEmpty) ...[
-          _section('SAY IT IN ENGLISH'),
-          for (final h in hinglish)
-            _hinglishCard((h as Map).cast<String, dynamic>()),
         ],
         // ── Focus chips ─────────────────────────────────────
         if (focus.isNotEmpty) ...[
@@ -477,50 +467,6 @@ class _ReportScreenState extends State<ReportScreen> {
                 color: Tokens.ink50,
                 height: 1.5,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _hinglishCard(Map<String, dynamic> h) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Tokens.goldTint,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'HINGLISH → ENGLISH',
-            style: Type.mono(
-              9,
-              color: Tokens.goldText,
-              weight: FontWeight.w700,
-              ls: 1.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '"${h['said'] ?? ''}"',
-            style: const TextStyle(
-              color: Tokens.ink60,
-              fontSize: 13,
-              fontStyle: FontStyle.italic,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            h['english'] ?? '',
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              height: 1.4,
             ),
           ),
         ],

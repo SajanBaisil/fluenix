@@ -78,12 +78,6 @@ Rules:
   in the learner's turns, and list which ones they used.
 - focus_points: exactly 2-3 short imperative phrases for the next call,
   e.g. "Use past tense for finished actions".
-- hinglish: moments where the learner switched into Hindi or Hinglish
-  ("matlab", "haan", "yaar", "kya bolte hain", whole Hindi clauses). Count
-  the switches and give up to 3 examples: "said" quotes the mixed sentence
-  verbatim, "english" is how the whole thought sounds in natural English.
-  Established Indian English ("prepone", "do the needful") is NOT Hinglish.
-  If they never switched, count 0 with no examples.
 - Scores 0-100. Calibrate: 40-60 beginner, 60-75 improving, 75-85 good,
   85+ near-fluent. overall is a weighted feel, not an average.
 - If the learner spoke very little, score what you can and say so in
@@ -106,7 +100,6 @@ _SCHEMA = {
         "focus_points",
         "headline",
         "memory",
-        "hinglish",
     ],
     "properties": {
         "overall": {"type": "INTEGER"},
@@ -157,24 +150,6 @@ _SCHEMA = {
             },
         },
         "focus_points": {"type": "ARRAY", "items": {"type": "STRING"}},
-        "hinglish": {
-            "type": "OBJECT",
-            "required": ["count", "examples"],
-            "properties": {
-                "count": {"type": "INTEGER"},
-                "examples": {
-                    "type": "ARRAY",
-                    "items": {
-                        "type": "OBJECT",
-                        "required": ["said", "english"],
-                        "properties": {
-                            "said": {"type": "STRING"},
-                            "english": {"type": "STRING"},
-                        },
-                    },
-                },
-            },
-        },
         "memory": {
             "type": "STRING",
             "description": "Third-person notes for the coach before the next "
@@ -266,7 +241,6 @@ async def analyze_transcript(turns: list[dict[str, Any]]) -> dict[str, Any]:
     """Returns a dict shaped for the `reports` table (minus call_id)."""
     report = await _call_model(_format_transcript(turns))
     scores = report.get("scores") or {}
-    hinglish = report.get("hinglish") or {}
     return {
         "model": settings().analysis_model,
         "overall": _clamp(report.get("overall")),
@@ -282,10 +256,6 @@ async def analyze_transcript(turns: list[dict[str, Any]]) -> dict[str, Any]:
         "filler_words": report.get("filler_words")
         or {"count": 0, "words": []},
         "focus_points": (report.get("focus_points") or [])[:3],
-        "hinglish": {
-            "count": _clamp(hinglish.get("count"), 0, 99),
-            "examples": (hinglish.get("examples") or [])[:3],
-        },
         "metrics": compute_metrics(turns),
         "memory": str(report.get("memory") or "")[:600],
     }

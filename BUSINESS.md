@@ -84,6 +84,44 @@ goFluent/Speexx sell to global L&D at global prices with human-coach cost struct
 | 4 | Feedback-loop sprint: Hinglish coaching, airtime/pace, weekly summary | ✅ shipped |
 | 5 | Community Phase 1: category rooms, realtime chat, report sharing, moderation | ✅ shipped |
 | 6 | Community Phase 2: group calls between users (LiveKit) + per-person reports | waiting on Phase 1 traction |
-| 7 | Practice revamp: scored multiple-choice drills, spaced repetition, listening drills | next sprint candidate |
+| 7 | Daily practice system ("Today's 5", §5) | planned — Sprint 1 next |
 | 8 | Paywall + RevenueCat (B2C revenue) | needs Play Console + RevenueCat accounts |
 | 9 | Store prep: SMTP + email confirm, privacy policy, listing assets | after paywall |
+
+## 5. Daily practice plan — "Today's 5" (30 Jul 2026)
+
+**Problem.** Practice is reactive: drills exist only after calls, and the tab
+is a read-and-reveal list with no daily pull. Retention needs a small,
+fresh, speaking-based ritual waiting every day, plus a streak not to break.
+
+**Core loop.** One generated pack per user per day (~3–5 min), stable all
+day, synced server-side. Finishing it — or making a call — keeps the
+streak. Rhythm: morning Today's 5, evening call. Day-0 users get packs
+from a curated seed bank (level + goal), not their (empty) history.
+
+**Item types (rotation):**
+1. *Speak it* — prompt, record ~15 s, AI grades with one fix (flagship).
+2. *Shadowing* — hear a coach-voice sentence, repeat aloud (design §06 hero).
+3. *Fix it fast* — scored MCQ grammar fixes, personalized from reports.
+4. *Word upgrade* — spaced repetition over `vocab_bank` (their own words).
+5. *Listen & answer* — short clip → comprehension MCQ.
+
+**Mechanics (kept light):** streak + Home streak pill (`gamified` flag in
+the design), one free rest day per week, practice days = clay-soft cells
+in Progress's 28-day grid, separate "Today's 5 is ready" notification.
+No XP or leagues in v1.
+
+**Sprints.**
+- *S1 — daily loop (text-only):* `GET /v1/practice/daily` (pack cached in
+  new `daily_packs` table) + `POST …/complete` (streak + rollup); full-screen
+  drill runner (card at a time, progress dots, finish state); Practice tab
+  rebuilt to design §06; streak pill; drill notification. Speak-it items
+  self-check against a model answer.
+- *S2 — voice drills:* record → upload → Gemini audio grading for Speak it;
+  TTS clips (coach voices) for shadowing + listening; per-day cap on free.
+- *S3 — depth:* minimal pairs, weekly challenge (community tie-in), SRS
+  tuning.
+
+**Cost.** One flash call per user/day for the pack; short audio clips on
+the hardened fallback model chain; notifications/streak infra already
+exists (`streaks` table is in the schema, unused until now).
